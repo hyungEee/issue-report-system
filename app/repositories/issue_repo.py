@@ -53,6 +53,18 @@ class IssueRepository:
         stmt = stmt.order_by(Issue.importance_score.desc(), Issue.last_seen_at.desc())
         return self.db.execute(stmt).scalars().all()
 
+    def find_open_with_centroid(self, category: str) -> Sequence[Issue]:
+        stmt = (
+            select(Issue)
+            .where(
+                Issue.status == "OPEN",
+                Issue.category == category,
+                Issue.centroid_json.isnot(None),
+            )
+            .options(selectinload(Issue.articles))
+        )
+        return self.db.execute(stmt).scalars().all()
+
     def find_for_report(
         self,
         countries: list[str] | None = None,
