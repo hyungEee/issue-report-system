@@ -104,54 +104,6 @@ def collect_news(
     return stats
 
 
-def collect_news_by_setting(
-    db: Session,
-    *,
-    domestic_enabled: bool,
-    global_enabled: bool,
-    category_list: list[str] | None = None,
-    max_results_per_call: int = 100,
-    max_pages: int = 1,
-    delay_between_calls: float = 1.5,
-) -> dict[str, int]:
-    """
-    사용자 설정에 맞춰 수집 대상을 나눠서 실행할 때 사용하는 함수입니다.
-
-    domestic_enabled=True  -> KR 포함
-    global_enabled=True    -> KR 제외 핵심국가 포함
-    """
-    categories = category_list or DEFAULT_CATEGORIES
-
-    countries: list[str] = []
-
-    if domestic_enabled:
-        countries.append("kr")
-
-    if global_enabled:
-        countries.extend([country for country in CORE_COUNTRIES if country != "kr"])
-
-    # 둘 다 꺼져 있으면 아무 것도 수집하지 않음
-    if not countries:
-        logger.info("수집 대상 국가가 없습니다.")
-        return {
-            "requested": 0,
-            "fetched": 0,
-            "saved": 0,
-            "skipped_url_duplicate": 0,
-            "skipped_dedup_duplicate": 0,
-            "failed_calls": 0,
-        }
-
-    return collect_news(
-        db=db,
-        countries=countries,
-        categories=categories,
-        max_results_per_call=max_results_per_call,
-        max_pages=max_pages,
-        delay_between_calls=delay_between_calls,
-    )
-
-
 def to_article_model(raw: RawNewsArticle) -> Article:
     return Article(
         title=normalize_text(raw.title),

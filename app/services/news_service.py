@@ -26,10 +26,7 @@ class RawNewsArticle:
     published_at: datetime
     country: str
     category: str
-    language: str
     content: str | None = None
-    source_url: str | None = None
-    image_url: str | None = None
 
 
 class NewsService:
@@ -104,43 +101,11 @@ class NewsService:
                 item=item,
                 country=country.upper(),
                 category=category,
-                language=resolved_lang or (item.get("lang") or "").lower(),
             )
             if mapped:
                 results.append(mapped)
 
         return results
-
-    def fetch_multi_country_top_headlines(
-        self,
-        *,
-        countries: list[str],
-        categories: list[str],
-        max_results_per_call: int = 10,
-    ) -> list[RawNewsArticle]:
-        """
-        여러 국가/카테고리 조합을 순회하여 수집.
-        """
-        all_articles: list[RawNewsArticle] = []
-
-        for country in countries:
-            for category in categories:
-                try:
-                    articles = self.fetch_top_headlines(
-                        country=country,
-                        category=category,
-                        max_results=max_results_per_call,
-                    )
-                    all_articles.extend(articles)
-                except NewsServiceError:
-                    logger.exception(
-                        "GNews 수집 실패 - country=%s, category=%s",
-                        country,
-                        category,
-                    )
-                    continue
-
-        return all_articles
 
     def _map_gnews_article(
         self,
@@ -148,7 +113,6 @@ class NewsService:
         item: dict[str, Any],
         country: str,
         category: str,
-        language: str,
     ) -> RawNewsArticle | None:
         title = (item.get("title") or "").strip()
         url = item.get("url")
@@ -159,7 +123,6 @@ class NewsService:
 
         source_info = item.get("source") or {}
         source_name = (source_info.get("name") or "unknown").strip()
-        source_url = source_info.get("url")
 
         return RawNewsArticle(
             title=title,
@@ -170,9 +133,6 @@ class NewsService:
             published_at=self._parse_iso_datetime(published_at_raw),
             country=country,
             category=category,
-            language=language,
-            source_url=source_url,
-            image_url=item.get("image"),
         )
 
     @staticmethod
