@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 from app.core.logger import get_logger
-from app.core.news_targets import CORE_COUNTRIES, SUPPORTED_CATEGORIES
+from app.core.news_targets import COUNTRY_MAX_PAGES, REGION_COUNTRY_MAP, SUPPORTED_CATEGORIES
 from app.models.article import Article
 from app.repositories.article_repo import ArticleRepository
 from app.services.news_service import NewsService, NewsServiceError, RawNewsArticle
@@ -39,7 +39,7 @@ def collect_news(
     news_service = NewsService()
     article_repo = ArticleRepository(db)
 
-    target_countries = countries or CORE_COUNTRIES
+    target_countries = countries or [c.lower() for cs in REGION_COUNTRY_MAP.values() for c in cs]
     target_categories = categories or SUPPORTED_CATEGORIES
 
     stats = {
@@ -51,8 +51,9 @@ def collect_news(
     }
 
     for country in target_countries:
+        pages = COUNTRY_MAX_PAGES.get(country, max_pages)
         for category in target_categories:
-            for page in range(1, max_pages + 1):
+            for page in range(1, pages + 1):
                 stats["requested"] += 1
 
                 try:
@@ -79,7 +80,7 @@ def collect_news(
 
                 _save_batch(raw_articles, article_repo, stats)
 
-                if len(raw_articles) < max_results_per_call:
+                if len(raw_articles) < limit:
                     break
 
     logger.info("뉴스 수집 완료 - stats=%s", stats)

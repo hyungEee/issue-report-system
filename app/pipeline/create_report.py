@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.constants import REPORT_PENDING
 from app.core.logger import get_logger
+from app.core.news_targets import REGION_COUNTRY_MAP
 from app.models.issue import Issue
 from app.models.report import Report
 from app.repositories.issue_repo import IssueRepository
@@ -27,7 +28,11 @@ def run_create_reports(db: Session) -> dict[str, int]:
     stats = {"users_processed": 0, "reports_created": 0}
 
     for user in user_repo.find_all():
-        countries = json.loads(user.country_json) if user.country_json else None
+        regions = json.loads(user.region_json) if user.region_json else None
+        countries = (
+            [c for r in regions for c in REGION_COUNTRY_MAP.get(r, [])]
+            if regions else None
+        )
         categories = json.loads(user.category_json) if user.category_json else None
 
         issues = list(issue_repo.find_for_report(
