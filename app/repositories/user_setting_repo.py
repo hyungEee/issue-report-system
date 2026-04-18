@@ -28,7 +28,7 @@ class UserSettingRepository:
         user_id: int,
         email: str,
         alert_enabled: bool = True,
-        country_json: str | None = None,
+        region_json: str | None = None,
         category_json: str | None = None,
     ) -> UserSetting:
         user_setting = self.find_by_user_id(user_id)
@@ -38,14 +38,14 @@ class UserSettingRepository:
                 user_id=user_id,
                 email=email,
                 alert_enabled=alert_enabled,
-                country_json=country_json,
+                region_json=region_json,
                 category_json=category_json,
             )
             self.db.add(user_setting)
         else:
             user_setting.email = email
             user_setting.alert_enabled = alert_enabled
-            user_setting.country_json = country_json
+            user_setting.region_json = region_json
             user_setting.category_json = category_json
 
         self.db.flush()
