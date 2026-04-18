@@ -10,11 +10,6 @@ class UserSettingRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def save(self, user_setting: UserSetting) -> UserSetting:
-        self.db.add(user_setting)
-        self.db.flush()
-        return user_setting
-
     def find_by_user_id(self, user_id: int) -> UserSetting | None:
         stmt = select(UserSetting).where(UserSetting.user_id == user_id)
         return self.db.execute(stmt).scalar_one_or_none()

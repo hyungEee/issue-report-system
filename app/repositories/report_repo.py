@@ -23,15 +23,6 @@ class ReportRepository:
         stmt = select(Report).where(Report.id == report_id)
         return self.db.execute(stmt).scalar_one_or_none()
 
-    def find_by_user_id(self, user_id: int, limit: int = 20) -> Sequence[Report]:
-        stmt = (
-            select(Report)
-            .where(Report.user_id == user_id)
-            .order_by(Report.created_at.desc())
-            .limit(limit)
-        )
-        return self.db.execute(stmt).scalars().all()
-
     def find_pending_reports(self, limit: int = 100) -> Sequence[Report]:
         stmt = (
             select(Report)
