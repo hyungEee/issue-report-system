@@ -23,14 +23,16 @@ class Settings(BaseSettings):
     # 스케줄러
     scheduler_enabled: bool = True
     scheduler_interval_minutes: int = 30
+    report_hour: int = 8
+    report_top_n: int = 10
 
     # 로깅
     log_level: str = "INFO"
 
     # 외부 연동
-    gnews_api_key: str | None = Field(default=None, alias="GNEWS_API_KEY")
-    ai_api_key: str | None = None
-    slack_webhook_url: str | None = None
+    gnews_api_key: str | None = None
+    anthropic_api_key: str | None = None
+    llm_model: str = "claude-haiku-4-5-20251001"
 
     model_config = SettingsConfigDict(
         env_file=".env",

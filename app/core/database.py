@@ -31,8 +31,4 @@ def get_db() -> Generator[Session, None, None]:
 
 
 def init_db() -> None:
-    """
-    MVP 단계에서는 Base.metadata.create_all() 정도만 두고,
-    나중에 Alembic 붙이면 됨.
-    """
     Base.metadata.create_all(bind=engine)
