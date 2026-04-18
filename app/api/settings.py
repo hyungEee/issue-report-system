@@ -11,7 +11,7 @@ from app.core.database import get_db
 from app.core.news_targets import REGION_COUNTRY_MAP, SUPPORTED_CATEGORIES
 from app.repositories.user_setting_repo import UserSettingRepository
 
-router = APIRouter(prefix="/users/{user_id}/settings", tags=["settings"])
+router = APIRouter(prefix="/settings", tags=["settings"])
 
 DbDep = Annotated[Session, Depends(get_db)]
 
@@ -47,7 +47,6 @@ class UserSettingRequest(BaseModel):
 
 
 class UserSettingResponse(BaseModel):
-    user_id: int
     email: str
     alert_enabled: bool
     regions: list[str] | None
@@ -56,7 +55,6 @@ class UserSettingResponse(BaseModel):
 
 def _to_response(user_setting) -> UserSettingResponse:
     return UserSettingResponse(
-        user_id=user_setting.user_id,
         email=user_setting.email,
         alert_enabled=user_setting.alert_enabled,
         regions=json.loads(user_setting.region_json) if user_setting.region_json else None,
@@ -64,33 +62,32 @@ def _to_response(user_setting) -> UserSettingResponse:
     )
 
 
-@router.get("", response_model=UserSettingResponse)
-def get_user_setting(user_id: int, db: DbDep):
+@router.get("/{email}", response_model=UserSettingResponse)
+def get_user_setting(email: str, db: DbDep):
     repo = UserSettingRepository(db)
-    user_setting = repo.find_by_user_id(user_id)
+    user_setting = repo.find_by_email(email)
     if user_setting is None:
         raise HTTPException(status_code=404, detail="유저 설정을 찾을 수 없습니다.")
     return _to_response(user_setting)
 
 
-@router.put("", response_model=UserSettingResponse)
-def upsert_user_setting(user_id: int, body: UserSettingRequest, db: DbDep):
+@router.put("", response_model=UserSettingResponse, status_code=201)
+def upsert_user_setting(body: UserSettingRequest, db: DbDep):
     repo = UserSettingRepository(db)
     user_setting = repo.upsert(
-        user_id=user_id,
         email=body.email,
         alert_enabled=body.alert_enabled,
-        region_json=json.dumps(body.regions, ensure_ascii=False) if body.regions is not None else None,
+        region_json=json.dumps(body.regions) if body.regions is not None else None,
         category_json=json.dumps(body.categories) if body.categories is not None else None,
     )
     db.commit()
     return _to_response(user_setting)
 
 
-@router.delete("", status_code=204)
-def delete_user_setting(user_id: int, db: DbDep):
+@router.delete("/{email}", status_code=204)
+def delete_user_setting(email: str, db: DbDep):
     repo = UserSettingRepository(db)
-    deleted = repo.delete_by_user_id(user_id)
+    deleted = repo.delete_by_email(email)
     if not deleted:
         raise HTTPException(status_code=404, detail="유저 설정을 찾을 수 없습니다.")
     db.commit()

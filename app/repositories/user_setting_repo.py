@@ -10,8 +10,8 @@ class UserSettingRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def find_by_user_id(self, user_id: int) -> UserSetting | None:
-        stmt = select(UserSetting).where(UserSetting.user_id == user_id)
+    def find_by_email(self, email: str) -> UserSetting | None:
+        stmt = select(UserSetting).where(UserSetting.email == email)
         return self.db.execute(stmt).scalar_one_or_none()
 
     def find_all(self) -> list[UserSetting]:
@@ -20,17 +20,15 @@ class UserSettingRepository:
 
     def upsert(
         self,
-        user_id: int,
         email: str,
         alert_enabled: bool = True,
         region_json: str | None = None,
         category_json: str | None = None,
     ) -> UserSetting:
-        user_setting = self.find_by_user_id(user_id)
+        user_setting = self.find_by_email(email)
 
         if user_setting is None:
             user_setting = UserSetting(
-                user_id=user_id,
                 email=email,
                 alert_enabled=alert_enabled,
                 region_json=region_json,
@@ -38,7 +36,6 @@ class UserSettingRepository:
             )
             self.db.add(user_setting)
         else:
-            user_setting.email = email
             user_setting.alert_enabled = alert_enabled
             user_setting.region_json = region_json
             user_setting.category_json = category_json
@@ -46,8 +43,8 @@ class UserSettingRepository:
         self.db.flush()
         return user_setting
 
-    def delete_by_user_id(self, user_id: int) -> bool:
-        stmt = delete(UserSetting).where(UserSetting.user_id == user_id)
+    def delete_by_email(self, email: str) -> bool:
+        stmt = delete(UserSetting).where(UserSetting.email == email)
         result = self.db.execute(stmt)
         self.db.flush()
         return result.rowcount > 0
