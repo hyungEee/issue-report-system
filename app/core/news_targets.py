@@ -7,7 +7,6 @@ SUPPORTED_CATEGORIES = [
     "entertainment",
     "sports",
     "science",
-    "health",
 ]
 
 REGION_COUNTRY_MAP: dict[str, list[str]] = {
