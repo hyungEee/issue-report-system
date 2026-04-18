@@ -11,11 +11,11 @@ SUPPORTED_CATEGORIES = [
 ]
 
 REGION_COUNTRY_MAP: dict[str, list[str]] = {
-    "korea":              ["KR"],
-    "north_america":      ["US"],
-    "asia":               ["JP", "IN", "TW"],
-    "europe":             ["GB", "DE", "FR", "RU"],
-    "middle_east_africa": ["AE", "IL"],
+    "korea":              ["kr"],
+    "north_america":      ["us"],
+    "asia":               ["jp", "in", "tw"],
+    "europe":             ["gb", "de", "fr", "ru"],
+    "middle_east_africa": ["ae", "il"],
 }
 
 COUNTRY_MAX_PAGES: dict[str, int] = {

@@ -30,7 +30,7 @@ def run_create_reports(db: Session) -> dict[str, int]:
     for user in user_repo.find_all():
         regions = json.loads(user.region_json) if user.region_json else None
         countries = (
-            [c for r in regions for c in REGION_COUNTRY_MAP.get(r, [])]
+            [c.upper() for r in regions for c in REGION_COUNTRY_MAP.get(r, [])]
             if regions else None
         )
         categories = json.loads(user.category_json) if user.category_json else None
