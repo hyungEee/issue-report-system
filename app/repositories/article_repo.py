@@ -18,12 +18,6 @@ class ArticleRepository:
         self.db.flush()
         return article
 
-    def get_existing_urls(self, urls: list[str]) -> set[str]:
-        if not urls:
-            return set()
-        stmt = select(Article.url).where(Article.url.in_(urls))
-        return set(self.db.execute(stmt).scalars().all())
-
     def get_existing_dedup_keys(self, dedup_keys: list[str]) -> set[str]:
         if not dedup_keys:
             return set()

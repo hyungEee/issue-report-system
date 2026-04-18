@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import math
-from collections import Counter
 from datetime import datetime, timedelta, timezone
 
 import numpy as np
@@ -17,6 +16,7 @@ from app.models.article import Article
 from app.models.issue import Issue
 from app.repositories.article_repo import ArticleRepository
 from app.repositories.issue_repo import IssueRepository
+from app.pipeline.preprocess import remove_duplicate_descriptions
 from app.services.embedding_service import EmbeddingService
 
 logger = get_logger(__name__)
@@ -73,7 +73,7 @@ def run_clustering(
 
         stats["categories_processed"] += 1
 
-        _remove_duplicate_descriptions(articles)
+        remove_duplicate_descriptions(articles)
         db.flush()
 
         embeddings = embedding_service.embed_articles(articles)
@@ -125,15 +125,6 @@ def run_clustering(
 
     logger.info("전체 군집화 완료 - stats=%s", stats)
     return stats
-
-
-def _remove_duplicate_descriptions(articles: list[Article]) -> None:
-    """2개 이상 기사에서 동일한 description이 등장하면 중복으로 보고 null 처리합니다."""
-    desc_counts = Counter(a.description for a in articles if a.description)
-    duplicates = {desc for desc, count in desc_counts.items() if count >= 2}
-    for article in articles:
-        if article.description in duplicates:
-            article.description = None
 
 
 def _find_matching_issue(centroid: np.ndarray, existing_issues: list[Issue]) -> Issue | None:

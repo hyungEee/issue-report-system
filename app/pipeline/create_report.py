@@ -54,9 +54,10 @@ def run_create_reports(db: Session) -> dict[str, int]:
 
 def _build_report_content(issues: list[Issue], llm_service: LLMService) -> str:
     report_date = date.today()
-    lines: list[str] = [
-        f"*{report_date.strftime('%Y년 %m월 %d일')} 주요 이슈 리포트*",
-        f"총 {len(issues)}개 이슈\n",
+    blocks: list[str] = [
+        f"<h2>{report_date.strftime('%Y년 %m월 %d일')} 주요 이슈 리포트</h2>",
+        f"<p>총 {len(issues)}개 이슈</p>",
+        "<hr>",
     ]
 
     for rank, issue in enumerate(issues, start=1):
@@ -69,12 +70,12 @@ def _build_report_content(issues: list[Issue], llm_service: LLMService) -> str:
                 insight="",
             )
 
-        lines.append(f"*{rank}. [{issue.category}] {issue.representative_title}*")
-        lines.append(digest.summary)
+        blocks.append(f"<h3>{rank}. [{issue.category}] {issue.representative_title}</h3>")
+        blocks.append(f"<p>{digest.summary}</p>")
         if digest.insight:
-            lines.append(f"_{digest.insight}_")
+            blocks.append(f"<p><em>{digest.insight}</em></p>")
         if issue.representative_url:
-            lines.append(f"<{issue.representative_url}|기사 보기>")
-        lines.append("")
+            blocks.append(f'<p><a href="{issue.representative_url}">기사 보기</a></p>')
+        blocks.append("<hr>")
 
-    return "\n".join(lines)
+    return "\n".join(blocks)

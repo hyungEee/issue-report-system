@@ -5,15 +5,15 @@ from sqlalchemy.orm import Session
 from app.core.logger import get_logger
 from app.repositories.report_repo import ReportRepository
 from app.repositories.user_setting_repo import UserSettingRepository
-from app.services.slack_service import SlackService
+from app.services.email_service import EmailService
 
 logger = get_logger(__name__)
 
 
 def run_send_reports(db: Session) -> dict[str, int]:
-    """PENDING 상태의 리포트를 Slack으로 발송합니다."""
+    """PENDING 상태의 리포트를 이메일로 발송합니다."""
     report_repo = ReportRepository(db)
-    slack_service = SlackService()
+    email_service = EmailService()
 
     stats = {"sent": 0, "failed": 0}
 
@@ -34,7 +34,8 @@ def run_send_reports(db: Session) -> dict[str, int]:
             stats["failed"] += 1
             continue
 
-        success = slack_service.send_report(report.content, user.slack_webhook_url)
+        subject = report.created_at.strftime("%Y년 %m월 %d일 주요 이슈 리포트")
+        success = email_service.send_report(report.content, user.email, subject)
         if success:
             report_repo.mark_as_sent(report.id)
             stats["sent"] += 1

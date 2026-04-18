@@ -32,7 +32,6 @@ def collect_news(
         "requested": 24,
         "fetched": 180,
         "saved": 120,
-        "skipped_url_duplicate": 40,
         "skipped_dedup_duplicate": 20,
         "failed_calls": 2,
     }
@@ -47,7 +46,6 @@ def collect_news(
         "requested": 0,
         "fetched": 0,
         "saved": 0,
-        "skipped_url_duplicate": 0,
         "skipped_dedup_duplicate": 0,
         "failed_calls": 0,
     }
@@ -93,27 +91,16 @@ def _save_batch(
     article_repo: ArticleRepository,
     stats: dict[str, int],
 ) -> None:
-    candidate_urls = [raw.url for raw in raw_articles]
     candidate_keys = [_make_dedup_key(raw) for raw in raw_articles]
-
-    existing_urls = article_repo.get_existing_urls(candidate_urls)
-    existing_keys = article_repo.get_existing_dedup_keys(candidate_keys)
-
-    seen_urls = set(existing_urls)
-    seen_keys = set(existing_keys)
+    seen_keys = article_repo.get_existing_dedup_keys(candidate_keys)
 
     for raw, dedup_key in zip(raw_articles, candidate_keys):
-        if raw.url in seen_urls:
-            stats["skipped_url_duplicate"] += 1
-            continue
-
         if dedup_key in seen_keys:
             stats["skipped_dedup_duplicate"] += 1
             continue
 
         article_repo.save(_to_article_model(raw, dedup_key))
         stats["saved"] += 1
-        seen_urls.add(raw.url)
         seen_keys.add(dedup_key)
 
 
