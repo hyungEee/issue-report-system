@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import hashlib
 import time
-from collections.abc import Iterable
 from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
@@ -14,8 +13,6 @@ from app.repositories.article_repo import ArticleRepository
 from app.services.news_service import NewsService, NewsServiceError, RawNewsArticle
 
 logger = get_logger(__name__)
-
-DEFAULT_CATEGORIES = SUPPORTED_CATEGORIES
 
 
 def collect_news(
@@ -44,7 +41,7 @@ def collect_news(
     article_repo = ArticleRepository(db)
 
     target_countries = countries or CORE_COUNTRIES
-    target_categories = categories or DEFAULT_CATEGORIES
+    target_categories = categories or SUPPORTED_CATEGORIES
 
     stats = {
         "requested": 0,
@@ -82,21 +79,8 @@ def collect_news(
                 time.sleep(delay_between_calls)
                 stats["fetched"] += len(raw_articles)
 
-                for raw in raw_articles:
-                    if article_repo.exists_by_url(raw.url):
-                        stats["skipped_url_duplicate"] += 1
-                        continue
+                _save_batch(raw_articles, article_repo, stats)
 
-                    article = to_article_model(raw)
-
-                    if article_repo.exists_by_dedup_key(article.dedup_key):
-                        stats["skipped_dedup_duplicate"] += 1
-                        continue
-
-                    article_repo.save(article)
-                    stats["saved"] += 1
-
-                # 결과가 max보다 적으면 다음 페이지 없음
                 if len(raw_articles) < max_results_per_call:
                     break
 
@@ -104,56 +88,80 @@ def collect_news(
     return stats
 
 
-def to_article_model(raw: RawNewsArticle) -> Article:
+def _save_batch(
+    raw_articles: list[RawNewsArticle],
+    article_repo: ArticleRepository,
+    stats: dict[str, int],
+) -> None:
+    candidate_urls = [raw.url for raw in raw_articles]
+    candidate_keys = [_make_dedup_key(raw) for raw in raw_articles]
+
+    existing_urls = article_repo.get_existing_urls(candidate_urls)
+    existing_keys = article_repo.get_existing_dedup_keys(candidate_keys)
+
+    seen_urls = set(existing_urls)
+    seen_keys = set(existing_keys)
+
+    for raw, dedup_key in zip(raw_articles, candidate_keys):
+        if raw.url in seen_urls:
+            stats["skipped_url_duplicate"] += 1
+            continue
+
+        if dedup_key in seen_keys:
+            stats["skipped_dedup_duplicate"] += 1
+            continue
+
+        article_repo.save(_to_article_model(raw, dedup_key))
+        stats["saved"] += 1
+        seen_urls.add(raw.url)
+        seen_keys.add(dedup_key)
+
+
+def _to_article_model(raw: RawNewsArticle, dedup_key: str) -> Article:
     return Article(
-        title=normalize_text(raw.title),
-        description=normalize_nullable_text(raw.description),
+        title=_normalize_text(raw.title),
+        description=_normalize_nullable_text(raw.description),
         content=raw.content or None,
-        url=normalize_url(raw.url),
-        source=normalize_text(raw.source),
-        published_at=normalize_datetime(raw.published_at),
-        country=raw.country.upper(),
+        url=_normalize_url(raw.url),
+        source=_normalize_text(raw.source),
+        published_at=_normalize_datetime(raw.published_at),
+        country=raw.country,
         category=raw.category.lower(),
-        dedup_key=make_dedup_key(raw),
-        created_at=datetime.now(timezone.utc),
+        dedup_key=dedup_key,
     )
 
 
-def make_dedup_key(raw: RawNewsArticle) -> str:
+def _make_dedup_key(raw: RawNewsArticle) -> str:
     """
     같은 이슈/같은 기사 중복을 너무 빡빡하지 않게 잡기 위한 키.
 
     URL은 매체별로 달라질 수 있으므로 포함하지 않고,
     title + source + published hour 정도로 구성합니다.
     """
-    normalized_title = normalize_text(raw.title).lower()
-    normalized_source = normalize_text(raw.source).lower()
-    published_hour = normalize_datetime(raw.published_at).strftime("%Y-%m-%d-%H")
+    normalized_title = _normalize_text(raw.title).lower()
+    normalized_source = _normalize_text(raw.source).lower()
+    published_hour = _normalize_datetime(raw.published_at).strftime("%Y-%m-%d-%H")
 
     base = f"{normalized_title}|{normalized_source}|{published_hour}"
     return hashlib.sha256(base.encode("utf-8")).hexdigest()
 
 
-def normalize_text(value: str) -> str:
+def _normalize_text(value: str) -> str:
     return " ".join((value or "").strip().split())
 
 
-def normalize_nullable_text(value: str | None) -> str | None:
+def _normalize_nullable_text(value: str | None) -> str | None:
     if value is None:
         return None
-
     normalized = " ".join(value.strip().split())
     return normalized or None
 
 
-def normalize_url(value: str) -> str:
+def _normalize_url(value: str) -> str:
     return (value or "").strip()
 
 
-def normalize_datetime(value: datetime) -> datetime:
-    """
-    timezone-aware datetime 으로 통일합니다.
-    """
+def _normalize_datetime(value: datetime) -> datetime:
     if value.tzinfo is None:
         return value.replace(tzinfo=timezone.utc)
     return value.astimezone(timezone.utc)

@@ -1,0 +1,80 @@
+from __future__ import annotations
+
+import json
+from datetime import date
+from sqlalchemy.orm import Session
+
+from app.core.config import settings
+from app.core.constants import REPORT_PENDING
+from app.core.logger import get_logger
+from app.models.issue import Issue
+from app.models.report import Report
+from app.repositories.issue_repo import IssueRepository
+from app.repositories.report_repo import ReportRepository
+from app.repositories.user_setting_repo import UserSettingRepository
+from app.services.llm_service import IssueDigest, LLMService
+
+logger = get_logger(__name__)
+
+
+def run_create_reports(db: Session) -> dict[str, int]:
+    """모든 유저에 대해 일간 리포트를 생성하고 PENDING 상태로 저장합니다."""
+    user_repo = UserSettingRepository(db)
+    issue_repo = IssueRepository(db)
+    report_repo = ReportRepository(db)
+    llm_service = LLMService()
+
+    stats = {"users_processed": 0, "reports_created": 0}
+
+    for user in user_repo.find_all():
+        countries = json.loads(user.country_json) if user.country_json else None
+        categories = json.loads(user.category_json) if user.category_json else None
+
+        issues = list(issue_repo.find_for_report(
+            countries=countries,
+            category_list=categories,
+            limit=settings.report_top_n,
+        ))
+
+        if not issues:
+            logger.info("리포트 대상 이슈 없음 - user_id=%s", user.user_id)
+            stats["users_processed"] += 1
+            continue
+
+        content = _build_report_content(issues, llm_service)
+
+        report_repo.save(Report(user_id=user.user_id, content=content, delivery_status=REPORT_PENDING))
+
+        stats["reports_created"] += 1
+        stats["users_processed"] += 1
+
+    logger.info("리포트 생성 완료 - stats=%s", stats)
+    return stats
+
+
+def _build_report_content(issues: list[Issue], llm_service: LLMService) -> str:
+    report_date = date.today()
+    lines: list[str] = [
+        f"*{report_date.strftime('%Y년 %m월 %d일')} 주요 이슈 리포트*",
+        f"총 {len(issues)}개 이슈\n",
+    ]
+
+    for rank, issue in enumerate(issues, start=1):
+        try:
+            digest = llm_service.summarize_issue(issue)
+        except Exception:
+            logger.exception("LLM 요약 실패 - issue_id=%s", issue.id)
+            digest = IssueDigest(
+                summary=issue.representative_summary or issue.representative_title,
+                insight="",
+            )
+
+        lines.append(f"*{rank}. [{issue.category}] {issue.representative_title}*")
+        lines.append(digest.summary)
+        if digest.insight:
+            lines.append(f"_{digest.insight}_")
+        if issue.representative_url:
+            lines.append(f"<{issue.representative_url}|기사 보기>")
+        lines.append("")
+
+    return "\n".join(lines)
