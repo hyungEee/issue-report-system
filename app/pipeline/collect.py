@@ -39,7 +39,7 @@ def collect_news(
     news_service = NewsService()
     article_repo = ArticleRepository(db)
 
-    target_countries = countries or [c.lower() for cs in REGION_COUNTRY_MAP.values() for c in cs]
+    target_countries = countries or [c for cs in REGION_COUNTRY_MAP.values() for c in cs]
     target_categories = categories or SUPPORTED_CATEGORIES
 
     stats = {
@@ -80,7 +80,7 @@ def collect_news(
 
                 _save_batch(raw_articles, article_repo, stats)
 
-                if len(raw_articles) < limit:
+                if len(raw_articles) < max_results_per_call:
                     break
 
     logger.info("뉴스 수집 완료 - stats=%s", stats)
