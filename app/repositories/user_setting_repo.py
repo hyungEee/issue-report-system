@@ -51,11 +51,3 @@ class UserSettingRepository:
         self.db.flush()
         return user_setting
 
-    def update_webhook_url(self, user_id: int, slack_webhook_url: str) -> UserSetting | None:
-        user_setting = self.find_by_user_id(user_id)
-        if user_setting is None:
-            return None
-
-        user_setting.slack_webhook_url = slack_webhook_url
-        self.db.flush()
-        return user_setting

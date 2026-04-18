@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Sequence
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.constants import REPORT_FAILED, REPORT_PENDING, REPORT_SENT
 from app.models.report import Report
 
 
@@ -26,7 +27,7 @@ class ReportRepository:
         stmt = (
             select(Report)
             .where(Report.user_id == user_id)
-            .order_by(Report.sent_at.desc())
+            .order_by(Report.created_at.desc())
             .limit(limit)
         )
         return self.db.execute(stmt).scalars().all()
@@ -34,7 +35,7 @@ class ReportRepository:
     def find_pending_reports(self, limit: int = 100) -> Sequence[Report]:
         stmt = (
             select(Report)
-            .where(Report.delivery_status == "PENDING")
+            .where(Report.delivery_status == REPORT_PENDING)
             .order_by(Report.id.asc())
             .limit(limit)
         )
@@ -45,8 +46,8 @@ class ReportRepository:
         if report is None:
             return None
 
-        report.delivery_status = "SENT"
-        report.sent_at = sent_at or datetime.utcnow()
+        report.delivery_status = REPORT_SENT
+        report.sent_at = sent_at or datetime.now(timezone.utc)
         self.db.flush()
         return report
 
@@ -55,6 +56,6 @@ class ReportRepository:
         if report is None:
             return None
 
-        report.delivery_status = "FAILED"
+        report.delivery_status = REPORT_FAILED
         self.db.flush()
         return report
