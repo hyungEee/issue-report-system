@@ -4,29 +4,53 @@ import json
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.core.news_targets import REGION_COUNTRY_MAP, SUPPORTED_CATEGORIES
 from app.repositories.user_setting_repo import UserSettingRepository
 
 router = APIRouter(prefix="/users/{user_id}/settings", tags=["settings"])
 
 DbDep = Annotated[Session, Depends(get_db)]
 
+_VALID_REGIONS = set(REGION_COUNTRY_MAP.keys())
+_VALID_CATEGORIES = set(SUPPORTED_CATEGORIES)
+
 
 class UserSettingRequest(BaseModel):
     email: str
     alert_enabled: bool = True
-    countries: list[str] | None = None
+    regions: list[str] | None = None
     categories: list[str] | None = None
+
+    @field_validator("regions")
+    @classmethod
+    def validate_regions(cls, v: list[str] | None) -> list[str] | None:
+        if v is None:
+            return v
+        invalid = [r for r in v if r not in _VALID_REGIONS]
+        if invalid:
+            raise ValueError(f"유효하지 않은 지역: {invalid}. 가능한 값: {sorted(_VALID_REGIONS)}")
+        return v
+
+    @field_validator("categories")
+    @classmethod
+    def validate_categories(cls, v: list[str] | None) -> list[str] | None:
+        if v is None:
+            return v
+        invalid = [c for c in v if c not in _VALID_CATEGORIES]
+        if invalid:
+            raise ValueError(f"유효하지 않은 카테고리: {invalid}. 가능한 값: {sorted(_VALID_CATEGORIES)}")
+        return v
 
 
 class UserSettingResponse(BaseModel):
     user_id: int
     email: str
     alert_enabled: bool
-    countries: list[str] | None
+    regions: list[str] | None
     categories: list[str] | None
 
 
@@ -35,7 +59,7 @@ def _to_response(user_setting) -> UserSettingResponse:
         user_id=user_setting.user_id,
         email=user_setting.email,
         alert_enabled=user_setting.alert_enabled,
-        countries=json.loads(user_setting.country_json) if user_setting.country_json else None,
+        regions=json.loads(user_setting.region_json) if user_setting.region_json else None,
         categories=json.loads(user_setting.category_json) if user_setting.category_json else None,
     )
 
@@ -56,7 +80,7 @@ def upsert_user_setting(user_id: int, body: UserSettingRequest, db: DbDep):
         user_id=user_id,
         email=body.email,
         alert_enabled=body.alert_enabled,
-        country_json=json.dumps(body.countries) if body.countries is not None else None,
+        region_json=json.dumps(body.regions, ensure_ascii=False) if body.regions is not None else None,
         category_json=json.dumps(body.categories) if body.categories is not None else None,
     )
     db.commit()
