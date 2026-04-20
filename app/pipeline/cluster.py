@@ -195,21 +195,29 @@ def _merge_into_issue(
     old_sim = float(old_centroid @ updated_centroid)
     best_new = _best_representative(new_articles, new_embeddings, updated_centroid)
     best_new_sim = float(new_sims[new_articles.index(best_new)])
-    if best_new.description and best_new_sim > old_sim:
+    if _get_summary(best_new) and best_new_sim > old_sim:
         issue.representative_title = best_new.title
-        issue.representative_summary = best_new.description
+        issue.representative_summary = _get_summary(best_new)
         issue.representative_url = best_new.url
 
 
 def _best_representative(articles: list[Article], embeddings: np.ndarray, centroid: np.ndarray) -> Article:
     """centroid에 가장 가까운 기사를 선택하되, description이 있는 기사를 우선합니다."""
     sims = embeddings @ centroid
-    desc_indices = [i for i, a in enumerate(articles) if a.description]
+    desc_indices = [i for i, a in enumerate(articles) if a.description or a.content]
     if desc_indices:
         best_i = max(desc_indices, key=lambda i: sims[i])
     else:
         best_i = int(np.argmax(sims))
     return articles[best_i]
+
+
+def _get_summary(article: Article) -> str | None:
+    if article.description:
+        return article.description
+    if article.content:
+        return article.content[:300]
+    return None
 
 
 def _build_issue(
@@ -236,7 +244,7 @@ def _build_issue(
 
     return Issue(
         representative_title=center_article.title,
-        representative_summary=center_article.description,
+        representative_summary=_get_summary(center_article),
         representative_url=center_article.url,
         country=country,
         category=category,
