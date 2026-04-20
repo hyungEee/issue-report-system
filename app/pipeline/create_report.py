@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import json
+import math
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.logger import get_logger
+from app.core.news_targets import SUPPORTED_CATEGORIES
 from app.models.issue import Issue
 from app.models.report import Report
 from app.repositories.issue_repo import IssueRepository
@@ -36,12 +38,24 @@ def run_create_reports(db: Session) -> dict[str, int]:
     stats = {"users_processed": 0, "reports_created": 0}
 
     for user in user_repo.find_all():
-        categories = json.loads(user.category_json) if user.category_json else None
+        categories = json.loads(user.category_json) if user.category_json else SUPPORTED_CATEGORIES
+        per_category = max(1, settings.report_max_issues // len(categories))
 
-        issues = list(issue_repo.find_for_report(
-            category_list=categories,
-            limit=settings.report_top_n,
-        ))
+        seen_ids: set[int] = set()
+        issues: list[Issue] = []
+        for cat in categories:
+            for issue in issue_repo.find_for_report(category_list=[cat], limit=per_category):
+                if issue.id not in seen_ids:
+                    seen_ids.add(issue.id)
+                    issues.append(issue)
+
+        # 남은 슬롯을 중요도 순으로 채움
+        remainder = settings.report_max_issues - len(issues)
+        if remainder > 0:
+            for issue in issue_repo.find_for_report(category_list=categories, limit=remainder + len(seen_ids)):
+                if issue.id not in seen_ids and len(issues) < settings.report_max_issues:
+                    seen_ids.add(issue.id)
+                    issues.append(issue)
 
         if not issues:
             logger.info("리포트 대상 이슈 없음 - user_id=%s", user.user_id)
