@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Sequence
 
 from sqlalchemy import select, update
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session, selectinload, joinedload
 
 from app.core.constants import ISSUE_CLOSED, ISSUE_OPEN
 from app.models.issue import Issue
@@ -50,6 +50,7 @@ class IssueRepository:
 
         stmt = stmt.order_by(Issue.importance_score.desc(), Issue.article_count.desc(), Issue.last_seen_at.desc())
         stmt = stmt.limit(limit)
+        stmt = stmt.options(selectinload(Issue.articles))
 
         return self.db.execute(stmt).scalars().all()
 
