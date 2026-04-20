@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.core.constants import DESCRIPTION_FALLBACK_LENGTH, MIN_DESCRIPTION_LENGTH
 from app.core.logger import get_logger
-from app.core.news_targets import CATEGORY_MAX_PAGES, COUNTRY_MAX_PAGES, REGION_COUNTRY_MAP, SUPPORTED_CATEGORIES
+from app.core.news_targets import CATEGORY_MAX_PAGES, COUNTRY_MAX_PAGES, SUPPORTED_CATEGORIES, SUPPORTED_COUNTRIES
 from app.models.article import Article
 from app.repositories.article_repo import ArticleRepository
 from app.services.news_service import NewsService, NewsServiceError, RawNewsArticle
@@ -38,7 +38,7 @@ def collect_news(
     news_service = NewsService()
     article_repo = ArticleRepository(db)
 
-    target_countries = countries or [c for cs in REGION_COUNTRY_MAP.values() for c in cs]
+    target_countries = countries or SUPPORTED_COUNTRIES
     target_categories = categories or SUPPORTED_CATEGORIES
 
     stats = {
