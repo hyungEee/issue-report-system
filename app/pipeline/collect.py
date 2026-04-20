@@ -105,11 +105,19 @@ def _save_batch(
         seen_keys.add(dedup_key)
 
 
+_MIN_DESCRIPTION_LENGTH = 50
+
+
 def _to_article_model(raw: RawNewsArticle, dedup_key: str) -> Article:
+    content = raw.content or None
+    description = _normalize_nullable_text(raw.description)
+    if not description or len(description) <= _MIN_DESCRIPTION_LENGTH:
+        description = content[:300] if content else None
+
     return Article(
         title=_normalize_text(raw.title),
-        description=_normalize_nullable_text(raw.description),
-        content=raw.content or None,
+        description=description,
+        content=content,
         url=_normalize_url(raw.url),
         source=_normalize_text(raw.source),
         published_at=_normalize_datetime(raw.published_at),

@@ -11,12 +11,11 @@ from sqlalchemy.orm import Session
 
 from app.core.constants import ISSUE_OPEN
 from app.core.logger import get_logger
-from app.core.news_targets import CATEGORY_WEIGHT, SUPPORTED_CATEGORIES
+from app.core.news_targets import SUPPORTED_CATEGORIES
 from app.models.article import Article
 from app.models.issue import Issue
 from app.repositories.article_repo import ArticleRepository
 from app.repositories.issue_repo import IssueRepository
-from app.pipeline.preprocess import remove_duplicate_descriptions
 from app.services.embedding_service import EmbeddingService
 
 logger = get_logger(__name__)
@@ -75,9 +74,6 @@ def run_clustering(
 
         stats["categories_processed"] += 1
 
-        remove_duplicate_descriptions(articles)
-        db.flush()
-
         embeddings = embedding_service.embed_articles(articles)
         normalized = normalize(embeddings)
         labels = DBSCAN(eps=eps, min_samples=min_samples, metric="euclidean").fit_predict(normalized)
@@ -101,7 +97,7 @@ def run_clustering(
             matched = _find_matching_issue(centroid, cluster_country, existing_issues)
 
             if matched:
-                _merge_into_issue(matched, cluster_articles, cluster_embeddings, centroid, category)
+                _merge_into_issue(matched, cluster_articles, cluster_embeddings, centroid)
                 db.flush()
                 stats["issues_merged"] += 1
                 stats["articles_linked"] += len(cluster_articles)
@@ -157,7 +153,6 @@ def _merge_into_issue(
     new_articles: list[Article],
     new_embeddings: np.ndarray,
     new_centroid: np.ndarray,
-    category: str,
 ) -> None:
     """기존 이슈에 새 기사를 병합하고 stats를 업데이트합니다."""
     for article in new_articles:
@@ -180,12 +175,10 @@ def _merge_into_issue(
     all_articles = list(issue.articles) + new_articles
     all_sources = {a.source for a in all_articles}
     all_countries = {a.country for a in all_articles}
-    weight = CATEGORY_WEIGHT.get(category, 0.5)
     issue.importance_score = round(
         len(all_articles)
         * len(all_sources)
-        * math.log(len(all_countries) + 1)
-        * weight,
+        * math.log(len(all_countries) + 1),
         4,
     )
 
@@ -204,7 +197,7 @@ def _merge_into_issue(
 def _best_representative(articles: list[Article], embeddings: np.ndarray, centroid: np.ndarray) -> Article:
     """centroid에 가장 가까운 기사를 선택하되, description이 있는 기사를 우선합니다."""
     sims = embeddings @ centroid
-    desc_indices = [i for i, a in enumerate(articles) if a.description or a.content]
+    desc_indices = [i for i, a in enumerate(articles) if a.description]
     if desc_indices:
         best_i = max(desc_indices, key=lambda i: sims[i])
     else:
@@ -213,11 +206,7 @@ def _best_representative(articles: list[Article], embeddings: np.ndarray, centro
 
 
 def _get_summary(article: Article) -> str | None:
-    if article.description:
-        return article.description
-    if article.content:
-        return article.content[:300]
-    return None
+    return article.description or None
 
 
 def _build_issue(
@@ -231,12 +220,10 @@ def _build_issue(
     countries = {a.country for a in articles}
     country = next(iter(countries)) if len(countries) == 1 else "GLOBAL"
 
-    weight = CATEGORY_WEIGHT.get(category, 0.5)
     importance_score = round(
         len(articles)
         * len({a.source for a in articles})
-        * math.log(len(countries) + 1)
-        * weight,
+        * math.log(len(countries) + 1),
         4,
     )
 
