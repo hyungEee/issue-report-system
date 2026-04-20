@@ -1,5 +1,4 @@
 SUPPORTED_CATEGORIES = [
-    "general",
     "world",
     "nation",
     "business",
@@ -18,9 +17,18 @@ REGION_COUNTRY_MAP: dict[str, list[str]] = {
 }
 
 COUNTRY_MAX_PAGES: dict[str, int] = {
-    # Tier 1 — 2페이지 수집으로 최대 200개 확보
-    "kr": 2,
-    "us": 2,
+    "kr": 3,
+    "us": 3,
+}
+
+CATEGORY_MAX_PAGES: dict[str, int] = {
+    "world":         3,
+    "nation":        3,
+    "business":      3,
+    "technology":    1,
+    "science":       1,
+    "entertainment": 1,
+    "sports":        1,
 }
 
 COUNTRY_LANG_MAP = {
@@ -35,15 +43,4 @@ COUNTRY_LANG_MAP = {
     "in": "en",
     "tw": "zh",
     "ru": "ru",
-}
-
-CATEGORY_WEIGHT: dict[str, float] = {
-    "general":       1.0,
-    "world":         1.0,
-    "nation":        1.0,
-    "business":      0.9,
-    "technology":    0.3,
-    "science":       0.3,
-    "entertainment": 0.2,
-    "sports":        0.2,
 }

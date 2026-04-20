@@ -81,7 +81,6 @@ const regionOptions = [
 ]
 
 const categoryOptions = [
-  { label: '일반', value: 'general' },
   { label: '국제', value: 'world' },
   { label: '정치/사회', value: 'nation' },
   { label: '비즈니스', value: 'business' },
