@@ -9,7 +9,16 @@ from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import normalize
 from sqlalchemy.orm import Session
 
-from app.core.constants import ISSUE_OPEN
+from app.core.constants import (
+    CLUSTERING_ARTICLE_LIMIT,
+    CLUSTERING_SINCE_HOURS,
+    COUNTRY_GLOBAL,
+    DBSCAN_EPS,
+    DBSCAN_MIN_SAMPLES,
+    ISSUE_MERGE_THRESHOLD,
+    ISSUE_OPEN,
+    STALE_ISSUE_HOURS,
+)
 from app.core.logger import get_logger
 from app.core.news_targets import SUPPORTED_CATEGORIES
 from app.models.article import Article
@@ -20,7 +29,6 @@ from app.services.embedding_service import EmbeddingService
 
 logger = get_logger(__name__)
 
-_MERGE_THRESHOLD = 0.85  # 기존 이슈와 코사인 유사도 이상이면 병합
 
 
 def _is_country_compatible(cluster_country: str, issue_country: str) -> bool:
@@ -32,16 +40,16 @@ def _is_country_compatible(cluster_country: str, issue_country: str) -> bool:
     """
     if cluster_country == issue_country:
         return True
-    if cluster_country != "GLOBAL" and issue_country == "GLOBAL":
+    if cluster_country != COUNTRY_GLOBAL and issue_country == COUNTRY_GLOBAL:
         return True
     return False
 
 
 def run_clustering(
     db: Session,
-    since_hours: int = 48,
-    eps: float = 0.30,
-    min_samples: int = 2,
+    since_hours: int = CLUSTERING_SINCE_HOURS,
+    eps: float = DBSCAN_EPS,
+    min_samples: int = DBSCAN_MIN_SAMPLES,
 ) -> dict[str, int]:
     """
     미처리(issue_id 없는) 기사를 카테고리별로 군집화하여 Issue를 생성하거나
@@ -67,7 +75,7 @@ def run_clustering(
     since = datetime.utcnow() - timedelta(hours=since_hours)
 
     for category in SUPPORTED_CATEGORIES:
-        articles = list(article_repo.find_unlinked_articles(category=category, since=since, limit=1000))
+        articles = list(article_repo.find_unlinked_articles(category=category, since=since, limit=CLUSTERING_ARTICLE_LIMIT))
 
         if len(articles) < min_samples:
             continue
@@ -92,7 +100,7 @@ def run_clustering(
             centroid = raw_centroid / np.linalg.norm(raw_centroid)
 
             cluster_countries = {a.country for a in cluster_articles}
-            cluster_country = next(iter(cluster_countries)) if len(cluster_countries) == 1 else "GLOBAL"
+            cluster_country = next(iter(cluster_countries)) if len(cluster_countries) == 1 else COUNTRY_GLOBAL
 
             matched = _find_matching_issue(centroid, cluster_country, existing_issues)
 
@@ -121,7 +129,7 @@ def run_clustering(
             len(unique_labels),
         )
 
-    cutoff = datetime.utcnow() - timedelta(hours=24)
+    cutoff = datetime.utcnow() - timedelta(hours=STALE_ISSUE_HOURS)
     stats["issues_closed"] = issue_repo.close_stale_issues(cutoff)
 
     logger.info("전체 군집화 완료 - stats=%s", stats)
@@ -143,7 +151,7 @@ def _find_matching_issue(centroid: np.ndarray, cluster_country: str, existing_is
     sims = centroid_matrix @ centroid
     best_idx = int(np.argmax(sims))
 
-    if sims[best_idx] >= _MERGE_THRESHOLD:
+    if sims[best_idx] >= ISSUE_MERGE_THRESHOLD:
         return issues[best_idx]
     return None
 
@@ -218,7 +226,7 @@ def _build_issue(
     center_article = _best_representative(articles, embeddings, centroid)
 
     countries = {a.country for a in articles}
-    country = next(iter(countries)) if len(countries) == 1 else "GLOBAL"
+    country = next(iter(countries)) if len(countries) == 1 else COUNTRY_GLOBAL
 
     importance_score = round(
         len(articles)

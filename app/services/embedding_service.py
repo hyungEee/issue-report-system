@@ -4,6 +4,7 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 
 from app.core.config import settings
+from app.core.constants import EMBEDDING_DIM
 from app.core.logger import get_logger
 from app.models.article import Article
 
@@ -21,7 +22,7 @@ class EmbeddingService:
 
     def embed_articles(self, articles: list[Article]) -> np.ndarray:
         if not articles:
-            return np.empty((0, 384))
+            return np.empty((0, EMBEDDING_DIM))
 
         texts = [self._make_embedding_input(a) for a in articles]
         model = self._get_model()

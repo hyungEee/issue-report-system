@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
+from app.core.constants import DESCRIPTION_FALLBACK_LENGTH, MIN_DESCRIPTION_LENGTH
 from app.core.logger import get_logger
 from app.core.news_targets import CATEGORY_MAX_PAGES, COUNTRY_MAX_PAGES, REGION_COUNTRY_MAP, SUPPORTED_CATEGORIES
 from app.models.article import Article
@@ -102,14 +103,11 @@ def _save_batch(
         seen_keys.add(dedup_key)
 
 
-_MIN_DESCRIPTION_LENGTH = 50
-
-
 def _to_article_model(raw: RawNewsArticle, dedup_key: str) -> Article:
     content = raw.content or None
     description = _normalize_nullable_text(raw.description)
-    if not description or len(description) <= _MIN_DESCRIPTION_LENGTH:
-        description = content[:300] if content else None
+    if not description or len(description) <= MIN_DESCRIPTION_LENGTH:
+        description = content[:DESCRIPTION_FALLBACK_LENGTH] if content else None
 
     return Article(
         title=_normalize_text(raw.title),

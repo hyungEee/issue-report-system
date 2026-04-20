@@ -22,9 +22,6 @@ class Settings(BaseSettings):
 
     # 스케줄러
     scheduler_enabled: bool = True
-    scheduler_interval_minutes: int = 30
-    report_hour: int = 8
-    report_top_n: int = 10
 
     # 로깅
     log_level: str = "INFO"

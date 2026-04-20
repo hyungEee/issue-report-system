@@ -5,9 +5,9 @@ import math
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
-from app.core.config import settings
+from app.core.constants import REPORT_MAX_ISSUES
 from app.core.logger import get_logger
-from app.core.news_targets import SUPPORTED_CATEGORIES
+from app.core.news_targets import CATEGORY_KO, SUPPORTED_CATEGORIES
 from app.models.issue import Issue
 from app.models.report import Report
 from app.repositories.issue_repo import IssueRepository
@@ -16,16 +16,6 @@ from app.repositories.user_setting_repo import UserSettingRepository
 from app.services.llm_service import IssueDigest, LLMService
 
 logger = get_logger(__name__)
-
-_CATEGORY_KO = {
-    "world":         "국제정세",
-    "nation":        "정치/사회",
-    "business":      "비즈니스",
-    "technology":    "기술",
-    "entertainment": "엔터테인먼트",
-    "sports":        "스포츠",
-    "science":       "과학",
-}
 
 
 def run_create_reports(db: Session) -> dict[str, int]:
@@ -39,7 +29,7 @@ def run_create_reports(db: Session) -> dict[str, int]:
 
     for user in user_repo.find_all():
         categories = json.loads(user.category_json) if user.category_json else SUPPORTED_CATEGORIES
-        per_category = max(1, settings.report_max_issues // len(categories))
+        per_category = max(1, REPORT_MAX_ISSUES // len(categories))
 
         seen_ids: set[int] = set()
         issues: list[Issue] = []
@@ -50,10 +40,10 @@ def run_create_reports(db: Session) -> dict[str, int]:
                     issues.append(issue)
 
         # 남은 슬롯을 중요도 순으로 채움
-        remainder = settings.report_max_issues - len(issues)
+        remainder = REPORT_MAX_ISSUES - len(issues)
         if remainder > 0:
             for issue in issue_repo.find_for_report(category_list=categories, limit=remainder + len(seen_ids)):
-                if issue.id not in seen_ids and len(issues) < settings.report_max_issues:
+                if issue.id not in seen_ids and len(issues) < REPORT_MAX_ISSUES:
                     seen_ids.add(issue.id)
                     issues.append(issue)
 
@@ -98,7 +88,7 @@ def _build_report_content(issues: list[Issue], llm_service: LLMService) -> str:
                 insight="",
             )
 
-        category_ko = _CATEGORY_KO.get(issue.category, issue.category)
+        category_ko = CATEGORY_KO.get(issue.category, issue.category)
         blocks.append(f"<h3>{rank}. [{category_ko}] {digest.title_ko}</h3>")
         blocks.append(f"<p>{digest.summary}</p>")
         if digest.insight:

@@ -8,6 +8,7 @@ from typing import Any
 import httpx
 
 from app.core.config import settings
+from app.core.constants import API_MAX_RETRIES, API_RETRY_BASE_WAIT, HTTP_TIMEOUT
 from app.core.logger import get_logger
 from app.core.news_targets import COUNTRY_LANG_MAP
 
@@ -76,16 +77,16 @@ class NewsService:
         if q:
             params["q"] = q
 
-        for attempt in range(3):
+        for attempt in range(API_MAX_RETRIES):
             try:
-                with httpx.Client(timeout=15.0) as client:
+                with httpx.Client(timeout=HTTP_TIMEOUT) as client:
                     response = client.get(f"{self.BASE_URL}/top-headlines", params=params)
                     response.raise_for_status()
                     data = response.json()
                 break
             except httpx.HTTPStatusError as e:
-                if e.response.status_code == 429 and attempt < 2:
-                    wait = 5 * (2 ** attempt)  # 5초, 10초
+                if e.response.status_code == 429 and attempt < API_MAX_RETRIES - 1:
+                    wait = API_RETRY_BASE_WAIT * (2 ** attempt)
                     logger.warning("GNews rate limit - %d초 후 재시도 (attempt=%d)", wait, attempt + 1)
                     time.sleep(wait)
                     continue
