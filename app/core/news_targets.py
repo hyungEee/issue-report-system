@@ -19,25 +19,20 @@ CATEGORY_KO: dict[str, str] = {
     "science":       "과학",
 }
 
-REGION_COUNTRY_MAP: dict[str, list[str]] = {
-    "korea":              ["kr"],
-    "north_america":      ["us"],
-    "asia":               ["jp", "in", "tw"],
-    "europe":             ["gb", "de", "fr", "ru"],
-    "middle_east_africa": ["ae", "il"],
-}
+SUPPORTED_COUNTRIES: list[str] = ["kr", "us", "jp", "gb"]
 
-# 국가별 최대 수집 페이지 수 (미지정 국가는 기본 1페이지)
 COUNTRY_MAX_PAGES: dict[str, int] = {
     "kr": 5,
-    "us": 3,
+    "us": 2,
+    "jp": 2,
+    "gb": 1,
 }
 
 # 카테고리별 최대 수집 페이지 수
 CATEGORY_MAX_PAGES: dict[str, int] = {
-    "world":         5,
+    "world":         2,
     "nation":        5,
-    "business":      5,
+    "business":      2,
     "technology":    1,
     "science":       1,
     "entertainment": 1,
@@ -48,13 +43,6 @@ CATEGORY_MAX_PAGES: dict[str, int] = {
 COUNTRY_LANG_MAP: dict[str, str] = {
     "us": "en",
     "gb": "en",
-    "de": "de",
-    "fr": "fr",
-    "ae": "ar",
-    "il": "he",
     "kr": "ko",
     "jp": "ja",
-    "in": "en",
-    "tw": "zh",
-    "ru": "ru",
 }
