@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import math
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import numpy as np
 from sklearn.cluster import DBSCAN
@@ -30,7 +30,6 @@ from app.services.embedding_service import EmbeddingService
 logger = get_logger(__name__)
 
 
-
 def _is_country_compatible(cluster_country: str, issue_country: str) -> bool:
     """클러스터와 기존 이슈의 country 병합 가능 여부.
 
@@ -48,16 +47,11 @@ def _is_country_compatible(cluster_country: str, issue_country: str) -> bool:
 def run_clustering(
     db: Session,
     since_hours: int = CLUSTERING_SINCE_HOURS,
-    eps: float = DBSCAN_EPS,
     min_samples: int = DBSCAN_MIN_SAMPLES,
 ) -> dict[str, int]:
     """
     미처리(issue_id 없는) 기사를 카테고리별로 군집화하여 Issue를 생성하거나
     기존 이슈에 병합합니다.
-
-    eps:         코사인 거리 임계값 (낮을수록 엄격, 높을수록 느슨)
-    min_samples: 클러스터 최소 기사 수 (이 미만이면 노이즈로 처리)
-    since_hours: 최근 N시간 이내 기사만 대상
     """
     article_repo = ArticleRepository(db)
     issue_repo = IssueRepository(db)
@@ -72,7 +66,7 @@ def run_clustering(
         "issues_closed": 0,
     }
 
-    since = datetime.utcnow() - timedelta(hours=since_hours)
+    since = datetime.now(timezone.utc) - timedelta(hours=since_hours)
 
     for category in SUPPORTED_CATEGORIES:
         articles = list(article_repo.find_unlinked_articles(category=category, since=since, limit=CLUSTERING_ARTICLE_LIMIT))
@@ -82,19 +76,19 @@ def run_clustering(
 
         stats["categories_processed"] += 1
 
+        existing_issues = list(issue_repo.find_open_with_centroid(category=category))
+
         embeddings = embedding_service.embed_articles(articles)
         normalized = normalize(embeddings)
-        labels = DBSCAN(eps=eps, min_samples=min_samples, metric="euclidean").fit_predict(normalized)
 
+        labels = DBSCAN(eps=DBSCAN_EPS, min_samples=min_samples, metric="euclidean").fit_predict(normalized)
         unique_labels = set(labels) - {-1}
         stats["clusters_found"] += len(unique_labels)
 
-        existing_issues = list(issue_repo.find_open_with_centroid(category=category))
-
         for label in unique_labels:
-            indices = np.where(labels == label)[0]
-            cluster_articles = [articles[i] for i in indices]
-            cluster_embeddings = normalized[indices]
+            cluster_mask = np.where(labels == label)[0]
+            cluster_articles = [articles[i] for i in cluster_mask]
+            cluster_embeddings = normalized[cluster_mask]
 
             raw_centroid = cluster_embeddings.mean(axis=0)
             centroid = raw_centroid / np.linalg.norm(raw_centroid)
@@ -129,7 +123,7 @@ def run_clustering(
             len(unique_labels),
         )
 
-    cutoff = datetime.utcnow() - timedelta(hours=STALE_ISSUE_HOURS)
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=STALE_ISSUE_HOURS)
     stats["issues_closed"] = issue_repo.close_stale_issues(cutoff)
 
     logger.info("전체 군집화 완료 - stats=%s", stats)
@@ -190,8 +184,6 @@ def _merge_into_issue(
         4,
     )
 
-    # 대표 기사 갱신: 새 기사 중 업데이트된 centroid에 가장 가까운 기사가
-    # 기존 대표 기사보다 centroid에 더 가까우면 교체
     new_sims = new_embeddings @ updated_centroid
     old_sim = float(old_centroid @ updated_centroid)
     best_new = _best_representative(new_articles, new_embeddings, updated_centroid)
