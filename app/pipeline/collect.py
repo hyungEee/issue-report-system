@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 from app.core.logger import get_logger
-from app.core.news_targets import COUNTRY_MAX_PAGES, REGION_COUNTRY_MAP, SUPPORTED_CATEGORIES
+from app.core.news_targets import CATEGORY_MAX_PAGES, COUNTRY_MAX_PAGES, REGION_COUNTRY_MAP, SUPPORTED_CATEGORIES
 from app.models.article import Article
 from app.repositories.article_repo import ArticleRepository
 from app.services.news_service import NewsService, NewsServiceError, RawNewsArticle
@@ -51,8 +51,9 @@ def collect_news(
     }
 
     for country in target_countries:
-        pages = COUNTRY_MAX_PAGES.get(country, max_pages)
+        country_pages = COUNTRY_MAX_PAGES.get(country, max_pages)
         for category in target_categories:
+            pages = min(country_pages, CATEGORY_MAX_PAGES.get(category, max_pages))
             for page in range(1, pages + 1):
                 stats["requested"] += 1
 
