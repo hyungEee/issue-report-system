@@ -160,7 +160,8 @@ def _merge_into_issue(
     for article in new_articles:
         article.issue_id = issue.id
 
-    old_count = issue.article_count
+    existing_articles = list(issue.articles)
+    old_count = len(existing_articles)
     new_count = len(new_articles)
     total_count = old_count + new_count
 
@@ -174,7 +175,7 @@ def _merge_into_issue(
     issue.last_seen_at = datetime.now(timezone.utc)
 
     # importance_score 재계산
-    all_articles = list(issue.articles) + new_articles
+    all_articles = existing_articles + new_articles
     all_sources = {a.source for a in all_articles}
     all_countries = {a.country for a in all_articles}
     issue.importance_score = round(
@@ -226,8 +227,6 @@ def _build_issue(
         * math.log(len(countries) + 1),
         4,
     )
-
-    published_times = [a.published_at for a in articles]
 
     return Issue(
         representative_title=center_article.title,
