@@ -61,13 +61,19 @@ def _build_report_content(issues: list[Issue], llm_service: LLMService) -> str:
     report_date = datetime.now(timezone.utc).date()
     blocks: list[str] = [
         f"<h2>{report_date.strftime('%Y년 %m월 %d일')} 주요 이슈 리포트</h2>",
-        f"<p>총 {len(issues)}개 이슈</p>",
         "<hr>",
     ]
 
     for rank, issue in enumerate(issues, start=1):
+        rep_article = next(
+            (a for a in issue.articles if a.url == issue.representative_url),
+            None,
+        )
+        title = rep_article.title if rep_article else issue.representative_title
+        content = rep_article.content if rep_article else None
+
         try:
-            digest = llm_service.summarize_issue(issue)
+            digest = llm_service.summarize_issue(title, content)
         except Exception:
             logger.exception("LLM 요약 실패 - issue_id=%s", issue.id)
             digest = IssueDigest(
