@@ -17,14 +17,14 @@ REGION_COUNTRY_MAP: dict[str, list[str]] = {
 }
 
 COUNTRY_MAX_PAGES: dict[str, int] = {
-    "kr": 3,
+    "kr": 5,
     "us": 3,
 }
 
 CATEGORY_MAX_PAGES: dict[str, int] = {
-    "world":         3,
-    "nation":        3,
-    "business":      3,
+    "world":         5,
+    "nation":        5,
+    "business":      5,
     "technology":    1,
     "science":       1,
     "entertainment": 1,
