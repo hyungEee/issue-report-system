@@ -93,7 +93,7 @@ def _build_report_content(issues: list[Issue], llm_service: LLMService) -> str:
         if digest.insight:
             blocks.append(f"<p><em>{digest.insight}</em></p>")
         if issue.representative_url:
-            blocks.append(f'<p><a href="{issue.representative_url}">기사 보기</a></p>')
+            blocks.append(f'<p><a href="{issue.representative_url}">원문 기사</a></p>')
         blocks.append("<hr>")
 
     return "\n".join(blocks)
