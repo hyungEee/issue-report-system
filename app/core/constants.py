@@ -21,7 +21,7 @@ REPORT_FAILED = "FAILED"
 SCHEDULER_INTERVAL_MINUTES = 30
 
 # 일간 리포트 생성/발송 시각 (UTC 기준 시)
-REPORT_HOUR = 4
+REPORT_HOUR = 12
 
 # =============================================================================
 # 리포트 구성
@@ -45,8 +45,8 @@ DESCRIPTION_FALLBACK_LENGTH = 300
 # =============================================================================
 
 # 두 기사 벡터 간 유클리드 거리 임계값 — 낮을수록 엄격, 높을수록 느슨
-# 정규화된 벡터 기준 0.30 ≈ 코사인 유사도 0.955 이상
-DBSCAN_EPS = 0.30
+# 정규화된 벡터 기준 0.35 ≈ 코사인 유사도 0.939 이상
+DBSCAN_EPS = 0.35
 
 # 클러스터를 형성하기 위한 최소 기사 수 — 미만이면 노이즈로 분류
 DBSCAN_MIN_SAMPLES = 2
@@ -82,10 +82,10 @@ EMBEDDING_DIM = 384
 # =============================================================================
 
 # 리포트 생성 잡 실행 분 (REPORT_HOUR:REPORT_CREATE_MINUTE)
-REPORT_CREATE_MINUTE = 0
+REPORT_CREATE_MINUTE = 00
 
 # 리포트 발송 잡 실행 분 (REPORT_HOUR:REPORT_SEND_MINUTE)
-REPORT_SEND_MINUTE = 5
+REPORT_SEND_MINUTE = 10
 
 # 잡이 예정 시각을 초과했을 때 허용하는 최대 지연 시간 (초)
 SCHEDULER_MISFIRE_GRACE_TIME = 3600
