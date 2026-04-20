@@ -5,7 +5,6 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.core.constants import REPORT_PENDING
 from app.core.logger import get_logger
 from app.core.news_targets import REGION_COUNTRY_MAP
 from app.models.issue import Issue
@@ -48,7 +47,7 @@ def run_create_reports(db: Session) -> dict[str, int]:
 
         content = _build_report_content(issues, llm_service)
 
-        report_repo.save(Report(user_id=user.user_id, content=content, delivery_status=REPORT_PENDING))
+        report_repo.save(Report(user_id=user.user_id, content=content))
 
         stats["reports_created"] += 1
         stats["users_processed"] += 1
