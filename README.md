@@ -27,7 +27,27 @@
 
 
 ## 🏗️ 아키텍처
-이미지 넣기
+이렇게 바꿔야 함 👇
+
+flowchart TD
+
+subgraph Collect_Cluster [30min Job]
+    A[GNews API] --> B[(Articles DB)]
+    B --> C[Embedding]
+    C --> D[DBSCAN]
+    D --> E{Similar Issue?}
+    E -->|Yes| F[Merge Issue]
+    E -->|No| G[New Issue]
+    F --> H[(Issues DB)]
+    G --> H
+end
+
+subgraph Report [Daily Job]
+    H --> I[Select Issues]
+    I --> J[LLM Summary]
+    J --> K[(Reports DB)]
+    K --> L[Send Email]
+end
 
 
 ## 🗄 데이터베이스 설계
