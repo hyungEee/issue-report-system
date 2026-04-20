@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import math
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
 import numpy as np
 from sklearn.cluster import DBSCAN
@@ -66,7 +66,7 @@ def run_clustering(
         "issues_closed": 0,
     }
 
-    since = datetime.now(timezone.utc) - timedelta(hours=since_hours)
+    since = datetime.utcnow() - timedelta(hours=since_hours)
 
     for category in SUPPORTED_CATEGORIES:
         articles = list(article_repo.find_unlinked_articles(category=category, since=since, limit=CLUSTERING_ARTICLE_LIMIT))
@@ -123,7 +123,7 @@ def run_clustering(
             len(unique_labels),
         )
 
-    cutoff = datetime.now(timezone.utc) - timedelta(hours=STALE_ISSUE_HOURS)
+    cutoff = datetime.utcnow() - timedelta(hours=STALE_ISSUE_HOURS)
     stats["issues_closed"] = issue_repo.close_stale_issues(cutoff)
 
     logger.info("전체 군집화 완료 - stats=%s", stats)
@@ -172,7 +172,7 @@ def _merge_into_issue(
 
     issue.centroid_json = json.dumps(updated_centroid.tolist())
     issue.article_count = total_count
-    issue.last_seen_at = datetime.now(timezone.utc)
+    issue.last_seen_at = datetime.utcnow()
 
     # importance_score 재계산
     all_articles = existing_articles + new_articles
@@ -236,7 +236,7 @@ def _build_issue(
         category=category,
         importance_score=importance_score,
         article_count=len(articles),
-        last_seen_at=datetime.now(timezone.utc),
+        last_seen_at=datetime.utcnow(),
         centroid_json=json.dumps(centroid.tolist()),
         status=ISSUE_OPEN,
     )

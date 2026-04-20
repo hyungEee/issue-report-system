@@ -154,5 +154,5 @@ def _normalize_url(value: str) -> str:
 
 def _normalize_datetime(value: datetime) -> datetime:
     if value.tzinfo is None:
-        return value.replace(tzinfo=timezone.utc)
-    return value.astimezone(timezone.utc)
+        return value
+    return value.astimezone(timezone.utc).replace(tzinfo=None)
