@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Sequence
 
 from sqlalchemy import select
@@ -38,7 +38,7 @@ class ReportRepository:
             return None
 
         report.delivery_status = REPORT_SENT
-        report.sent_at = sent_at or datetime.now(timezone.utc)
+        report.sent_at = sent_at or datetime.utcnow()
         self.db.flush()
         return report
 

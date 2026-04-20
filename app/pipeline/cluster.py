@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import math
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
 import numpy as np
 from sklearn.cluster import DBSCAN
@@ -65,7 +65,7 @@ def run_clustering(
         "issues_closed": 0,
     }
 
-    since = datetime.now(timezone.utc) - timedelta(hours=since_hours)
+    since = datetime.utcnow() - timedelta(hours=since_hours)
 
     for category in SUPPORTED_CATEGORIES:
         articles = list(article_repo.find_unlinked_articles(category=category, since=since, limit=1000))
@@ -125,7 +125,7 @@ def run_clustering(
             len(unique_labels),
         )
 
-    cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
+    cutoff = datetime.utcnow() - timedelta(hours=24)
     stats["issues_closed"] = issue_repo.close_stale_issues(cutoff)
 
     logger.info("전체 군집화 완료 - stats=%s", stats)
