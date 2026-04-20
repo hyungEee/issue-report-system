@@ -27,6 +27,8 @@
 
 
 ## 🏗️ 아키텍처
+
+```mermaid
 flowchart TD
 
 subgraph Collect_Cluster [30min Job]
@@ -46,6 +48,7 @@ subgraph Report [Daily Job]
     J --> K[(Reports DB)]
     K --> L[Send Email]
 end
+```mermaid
 
 
 ## 🗄 데이터베이스 설계
