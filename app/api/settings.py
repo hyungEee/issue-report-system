@@ -8,32 +8,20 @@ from pydantic import BaseModel, field_validator
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.news_targets import REGION_COUNTRY_MAP, SUPPORTED_CATEGORIES
+from app.core.news_targets import SUPPORTED_CATEGORIES
 from app.repositories.user_setting_repo import UserSettingRepository
 
 router = APIRouter(prefix="/settings", tags=["settings"])
 
 DbDep = Annotated[Session, Depends(get_db)]
 
-_VALID_REGIONS = set(REGION_COUNTRY_MAP.keys())
 _VALID_CATEGORIES = set(SUPPORTED_CATEGORIES)
 
 
 class UserSettingRequest(BaseModel):
     email: str
     alert_enabled: bool = True
-    regions: list[str] | None = None
     categories: list[str] | None = None
-
-    @field_validator("regions")
-    @classmethod
-    def validate_regions(cls, v: list[str] | None) -> list[str] | None:
-        if v is None:
-            return v
-        invalid = [r for r in v if r not in _VALID_REGIONS]
-        if invalid:
-            raise ValueError(f"유효하지 않은 지역: {invalid}. 가능한 값: {sorted(_VALID_REGIONS)}")
-        return v
 
     @field_validator("categories")
     @classmethod
@@ -49,7 +37,6 @@ class UserSettingRequest(BaseModel):
 class UserSettingResponse(BaseModel):
     email: str
     alert_enabled: bool
-    regions: list[str] | None
     categories: list[str] | None
 
 
@@ -57,7 +44,6 @@ def _to_response(user_setting) -> UserSettingResponse:
     return UserSettingResponse(
         email=user_setting.email,
         alert_enabled=user_setting.alert_enabled,
-        regions=json.loads(user_setting.region_json) if user_setting.region_json else None,
         categories=json.loads(user_setting.category_json) if user_setting.category_json else None,
     )
 
@@ -77,7 +63,6 @@ def upsert_user_setting(body: UserSettingRequest, db: DbDep):
     user_setting = repo.upsert(
         email=body.email,
         alert_enabled=body.alert_enabled,
-        region_json=json.dumps(body.regions) if body.regions is not None else None,
         category_json=json.dumps(body.categories) if body.categories is not None else None,
     )
     db.commit()

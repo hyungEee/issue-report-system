@@ -37,14 +37,11 @@ class IssueRepository:
 
     def find_for_report(
         self,
-        countries: list[str] | None = None,
         category_list: list[str] | None = None,
         limit: int = 20,
     ) -> Sequence[Issue]:
         stmt = select(Issue).where(Issue.status == ISSUE_OPEN)
 
-        if countries:
-            stmt = stmt.where(Issue.country.in_(countries + ["GLOBAL"]))
         if category_list:
             stmt = stmt.where(Issue.category.in_(category_list))
 

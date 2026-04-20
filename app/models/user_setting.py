@@ -12,6 +12,4 @@ class UserSetting(Base):
     email: Mapped[str] = mapped_column(String(320), nullable=False, unique=True, index=True)
     alert_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
-    # null = 전체 지역, null = 전체 카테고리
-    region_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     category_json: Mapped[str | None] = mapped_column(Text, nullable=True)

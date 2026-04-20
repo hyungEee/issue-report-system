@@ -22,7 +22,6 @@ class UserSettingRepository:
         self,
         email: str,
         alert_enabled: bool = True,
-        region_json: str | None = None,
         category_json: str | None = None,
     ) -> UserSetting:
         user_setting = self.find_by_email(email)
@@ -31,13 +30,11 @@ class UserSettingRepository:
             user_setting = UserSetting(
                 email=email,
                 alert_enabled=alert_enabled,
-                region_json=region_json,
                 category_json=category_json,
             )
             self.db.add(user_setting)
         else:
             user_setting.alert_enabled = alert_enabled
-            user_setting.region_json = region_json
             user_setting.category_json = category_json
 
         self.db.flush()

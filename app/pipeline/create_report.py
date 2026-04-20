@@ -6,7 +6,6 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.logger import get_logger
-from app.core.news_targets import REGION_COUNTRY_MAP
 from app.models.issue import Issue
 from app.models.report import Report
 from app.repositories.issue_repo import IssueRepository
@@ -15,6 +14,16 @@ from app.repositories.user_setting_repo import UserSettingRepository
 from app.services.llm_service import IssueDigest, LLMService
 
 logger = get_logger(__name__)
+
+_CATEGORY_KO = {
+    "world":         "국제정세",
+    "nation":        "정치/사회",
+    "business":      "비즈니스",
+    "technology":    "기술",
+    "entertainment": "엔터테인먼트",
+    "sports":        "스포츠",
+    "science":       "과학",
+}
 
 
 def run_create_reports(db: Session) -> dict[str, int]:
@@ -27,15 +36,9 @@ def run_create_reports(db: Session) -> dict[str, int]:
     stats = {"users_processed": 0, "reports_created": 0}
 
     for user in user_repo.find_all():
-        regions = json.loads(user.region_json) if user.region_json else None
-        countries = (
-            [c.upper() for r in regions for c in REGION_COUNTRY_MAP.get(r, [])]
-            if regions else None
-        )
         categories = json.loads(user.category_json) if user.category_json else None
 
         issues = list(issue_repo.find_for_report(
-            countries=countries,
             category_list=categories,
             limit=settings.report_top_n,
         ))
@@ -76,11 +79,13 @@ def _build_report_content(issues: list[Issue], llm_service: LLMService) -> str:
         except Exception:
             logger.exception("LLM 요약 실패 - issue_id=%s", issue.id)
             digest = IssueDigest(
+                title_ko=title,
                 summary=issue.representative_summary or issue.representative_title,
                 insight="",
             )
 
-        blocks.append(f"<h3>{rank}. [{issue.category}] {issue.representative_title}</h3>")
+        category_ko = _CATEGORY_KO.get(issue.category, issue.category)
+        blocks.append(f"<h3>{rank}. [{category_ko}] {digest.title_ko}</h3>")
         blocks.append(f"<p>{digest.summary}</p>")
         if digest.insight:
             blocks.append(f"<p><em>{digest.insight}</em></p>")
