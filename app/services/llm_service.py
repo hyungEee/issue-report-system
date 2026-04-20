@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass
 
 from anthropic import Anthropic
@@ -13,6 +12,7 @@ logger = get_logger(__name__)
 
 @dataclass
 class IssueDigest:
+    title_ko: str
     summary: str
     insight: str
 
@@ -22,12 +22,26 @@ class LLMService:
         "You are a news summarizer. "
         "Summarize strictly based on the article provided. "
         "Do not add any facts, names, or claims not explicitly stated in the article. "
-        "Respond only in Korean. "
-        "Return a JSON object with exactly two keys:\n"
-        '  "summary": 2–3 sentences summarizing the article.\n'
-        '  "insight": one sentence starting with "인사이트:" that provides a meaningful takeaway.\n'
-        "Return only the JSON object with no markdown, no code block, no extra text."
+        "Respond only in Korean, using polite formal language (존댓말). "
+        "title_ko: translate the title to Korean if it is not already in Korean, otherwise keep it as is.\n"
+        "summary: 2–3 sentences summarizing the article.\n"
+        'insight: one sentence starting with "인사이트:" that provides a meaningful takeaway.'
     )
+
+    _TOOL = {
+        "name": "create_digest",
+        "description": "뉴스 기사 요약 결과를 반환합니다.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "title_ko": {"type": "string"},
+                "summary": {"type": "string"},
+                "insight": {"type": "string"},
+            },
+            "required": ["title_ko", "summary", "insight"],
+            "additionalProperties": False,
+        },
+    }
 
     def __init__(self) -> None:
         self._client = Anthropic(api_key=settings.anthropic_api_key)
@@ -37,22 +51,16 @@ class LLMService:
 
         message = self._client.messages.create(
             model=settings.llm_model,
-            max_tokens=400,
+            max_tokens=800,
             system=self._SYSTEM_PROMPT,
+            tools=[self._TOOL],
+            tool_choice={"type": "tool", "name": "create_digest"},
             messages=[{"role": "user", "content": user_content}],
         )
 
-        text = message.content[0].text.strip()
-
-        try:
-            parsed = json.loads(text)
-            summary = str(parsed.get("summary", "")).strip()
-            insight = str(parsed.get("insight", "")).strip()
-            if not summary:
-                raise ValueError("summary 필드 없음")
-        except Exception:
-            logger.warning("LLM 응답 JSON 파싱 실패 - raw=%s", text[:200])
-            summary = title
-            insight = ""
-
-        return IssueDigest(summary=summary, insight=insight)
+        tool_input = message.content[0].input
+        return IssueDigest(
+            title_ko=tool_input.get("title_ko", title).strip(),
+            summary=tool_input.get("summary", "").strip(),
+            insight=tool_input.get("insight", "").strip(),
+        )
