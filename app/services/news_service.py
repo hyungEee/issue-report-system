@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
@@ -75,21 +76,30 @@ class NewsService:
         if q:
             params["q"] = q
 
-        try:
-            with httpx.Client(timeout=15.0) as client:
-                response = client.get(f"{self.BASE_URL}/top-headlines", params=params)
-                response.raise_for_status()
-                data = response.json()
-        except httpx.HTTPStatusError as e:
-            logger.exception(
-                "GNews HTTP 오류 - status=%s body=%s",
-                e.response.status_code if e.response else "unknown",
-                e.response.text if e.response else "no-response",
-            )
-            raise NewsServiceError(f"GNews HTTP 오류: {e}") from e
-        except httpx.HTTPError as e:
-            logger.exception("GNews 호출 실패")
-            raise NewsServiceError(f"GNews 호출 실패: {e}") from e
+        for attempt in range(3):
+            try:
+                with httpx.Client(timeout=15.0) as client:
+                    response = client.get(f"{self.BASE_URL}/top-headlines", params=params)
+                    response.raise_for_status()
+                    data = response.json()
+                break
+            except httpx.HTTPStatusError as e:
+                if e.response.status_code == 429 and attempt < 2:
+                    wait = 5 * (2 ** attempt)  # 5초, 10초
+                    logger.warning("GNews rate limit - %d초 후 재시도 (attempt=%d)", wait, attempt + 1)
+                    time.sleep(wait)
+                    continue
+                logger.exception(
+                    "GNews HTTP 오류 - status=%s body=%s",
+                    e.response.status_code if e.response else "unknown",
+                    e.response.text if e.response else "no-response",
+                )
+                raise NewsServiceError(f"GNews HTTP 오류: {e}") from e
+            except httpx.HTTPError as e:
+                logger.exception("GNews 호출 실패")
+                raise NewsServiceError(f"GNews 호출 실패: {e}") from e
+        else:
+            raise NewsServiceError("GNews rate limit 초과 - 재시도 횟수 소진")
 
         articles = data.get("articles", [])
         if not isinstance(articles, list):

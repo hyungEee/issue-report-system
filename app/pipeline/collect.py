@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import hashlib
-import time
 from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
@@ -21,7 +20,6 @@ def collect_news(
     categories: list[str] | None = None,
     max_results_per_call: int = 100,
     max_pages: int = 1,
-    delay_between_calls: float = 1.5,
 ) -> dict[str, int]:
     """
     GNews로부터 여러 국가/카테고리 헤드라인을 수집하고
@@ -73,10 +71,8 @@ def collect_news(
                         page,
                         e,
                     )
-                    time.sleep(delay_between_calls)
                     break
 
-                time.sleep(delay_between_calls)
                 stats["fetched"] += len(raw_articles)
 
                 _save_batch(raw_articles, article_repo, stats)
