@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.core.constants import REPORT_MAX_ISSUES
 from app.core.logger import get_logger
-from app.core.news_targets import CATEGORY_KO, SUPPORTED_CATEGORIES
+from app.core.news_targets import SUPPORTED_CATEGORIES
 from app.models.issue import Issue
 from app.models.report import Report
 from app.repositories.issue_repo import IssueRepository
@@ -88,8 +88,7 @@ def _build_report_content(issues: list[Issue], llm_service: LLMService) -> str:
                 insight="",
             )
 
-        category_ko = CATEGORY_KO.get(issue.category, issue.category)
-        blocks.append(f"<h3>{rank}. [{category_ko}] {digest.title_ko}</h3>")
+        blocks.append(f"<h3>{rank}. {digest.title_ko}</h3>")
         blocks.append(f"<p>{digest.summary}</p>")
         if digest.insight:
             blocks.append(f"<p><em>{digest.insight}</em></p>")
