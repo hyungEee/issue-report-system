@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Sequence
 
 from sqlalchemy import select, update
-from sqlalchemy.orm import Session, selectinload, joinedload
+from sqlalchemy.orm import Session, selectinload
 
 from app.core.constants import ISSUE_CLOSED, ISSUE_OPEN
 from app.models.issue import Issue
