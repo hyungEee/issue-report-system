@@ -24,6 +24,20 @@ logger = get_logger(__name__)
 _MERGE_THRESHOLD = 0.85  # 기존 이슈와 코사인 유사도 이상이면 병합
 
 
+def _is_country_compatible(cluster_country: str, issue_country: str) -> bool:
+    """클러스터와 기존 이슈의 country 병합 가능 여부.
+
+    - 같은 나라끼리는 항상 병합 가능
+    - 단일 국가 클러스터는 GLOBAL 이슈에 병합 가능 (글로벌 이슈 확장)
+    - GLOBAL 클러스터는 단일 국가 이슈에 병합 불가
+    """
+    if cluster_country == issue_country:
+        return True
+    if cluster_country != "GLOBAL" and issue_country == "GLOBAL":
+        return True
+    return False
+
+
 def run_clustering(
     db: Session,
     since_hours: int = 48,
@@ -81,7 +95,10 @@ def run_clustering(
             raw_centroid = cluster_embeddings.mean(axis=0)
             centroid = raw_centroid / np.linalg.norm(raw_centroid)
 
-            matched = _find_matching_issue(centroid, existing_issues)
+            cluster_countries = {a.country for a in cluster_articles}
+            cluster_country = next(iter(cluster_countries)) if len(cluster_countries) == 1 else "GLOBAL"
+
+            matched = _find_matching_issue(centroid, cluster_country, existing_issues)
 
             if matched:
                 _merge_into_issue(matched, cluster_articles, cluster_embeddings, centroid, category)
@@ -115,9 +132,13 @@ def run_clustering(
     return stats
 
 
-def _find_matching_issue(centroid: np.ndarray, existing_issues: list[Issue]) -> Issue | None:
+def _find_matching_issue(centroid: np.ndarray, cluster_country: str, existing_issues: list[Issue]) -> Issue | None:
     """새 클러스터 centroid와 가장 유사한 기존 이슈를 반환. 임계값 미만이면 None."""
-    valid = [(i, json.loads(i.centroid_json)) for i in existing_issues if i.centroid_json]
+    valid = [
+        (i, json.loads(i.centroid_json))
+        for i in existing_issues
+        if i.centroid_json and _is_country_compatible(cluster_country, i.country)
+    ]
     if not valid:
         return None
 
