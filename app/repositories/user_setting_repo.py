@@ -21,7 +21,6 @@ class UserSettingRepository:
     def upsert(
         self,
         email: str,
-        alert_enabled: bool = True,
         category_json: str | None = None,
     ) -> UserSetting:
         user_setting = self.find_by_email(email)
@@ -29,12 +28,10 @@ class UserSettingRepository:
         if user_setting is None:
             user_setting = UserSetting(
                 email=email,
-                alert_enabled=alert_enabled,
                 category_json=category_json,
             )
             self.db.add(user_setting)
         else:
-            user_setting.alert_enabled = alert_enabled
             user_setting.category_json = category_json
 
         self.db.flush()

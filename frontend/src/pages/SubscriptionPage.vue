@@ -73,7 +73,6 @@ async function submitSubscription() {
   try {
     await putSubscription({
       email: form.email,
-      alert_enabled: true,
       categories: form.categories.length > 0 ? [...form.categories] : null,
     })
     alert('구독이 완료되었습니다.')

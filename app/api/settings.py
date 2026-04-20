@@ -20,7 +20,6 @@ _VALID_CATEGORIES = set(SUPPORTED_CATEGORIES)
 
 class UserSettingRequest(BaseModel):
     email: str
-    alert_enabled: bool = True
     categories: list[str] | None = None
 
     @field_validator("categories")
@@ -36,14 +35,12 @@ class UserSettingRequest(BaseModel):
 
 class UserSettingResponse(BaseModel):
     email: str
-    alert_enabled: bool
     categories: list[str] | None
 
 
 def _to_response(user_setting) -> UserSettingResponse:
     return UserSettingResponse(
         email=user_setting.email,
-        alert_enabled=user_setting.alert_enabled,
         categories=json.loads(user_setting.category_json) if user_setting.category_json else None,
     )
 
@@ -62,7 +59,6 @@ def upsert_user_setting(body: UserSettingRequest, db: DbDep):
     repo = UserSettingRepository(db)
     user_setting = repo.upsert(
         email=body.email,
-        alert_enabled=body.alert_enabled,
         category_json=json.dumps(body.categories) if body.categories is not None else None,
     )
     db.commit()
