@@ -3,12 +3,11 @@ from __future__ import annotations
 import numpy as np
 from sentence_transformers import SentenceTransformer
 
+from app.core.config import settings
 from app.core.logger import get_logger
 from app.models.article import Article
 
 logger = get_logger(__name__)
-
-_MODEL_NAME = "paraphrase-multilingual-MiniLM-L12-v2"
 
 
 class EmbeddingService:
@@ -16,8 +15,8 @@ class EmbeddingService:
 
     def _get_model(self) -> SentenceTransformer:
         if EmbeddingService._model is None:
-            logger.info("임베딩 모델 로딩 - model=%s", _MODEL_NAME)
-            EmbeddingService._model = SentenceTransformer(_MODEL_NAME)
+            logger.info("임베딩 모델 로딩 - model=%s", settings.embedding_model)
+            EmbeddingService._model = SentenceTransformer(settings.embedding_model)
         return EmbeddingService._model
 
     def embed_articles(self, articles: list[Article]) -> np.ndarray:

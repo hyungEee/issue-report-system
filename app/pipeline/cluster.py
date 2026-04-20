@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.core.constants import ISSUE_OPEN
 from app.core.logger import get_logger
-from app.core.news_targets import SUPPORTED_CATEGORIES
+from app.core.news_targets import CATEGORY_WEIGHT, SUPPORTED_CATEGORIES
 from app.models.article import Article
 from app.models.issue import Issue
 from app.repositories.article_repo import ArticleRepository
@@ -22,18 +22,6 @@ from app.services.embedding_service import EmbeddingService
 logger = get_logger(__name__)
 
 _MERGE_THRESHOLD = 0.85  # 기존 이슈와 코사인 유사도 이상이면 병합
-
-_CATEGORY_WEIGHT: dict[str, float] = {
-    "general":       1.0,
-    "world":         1.0,
-    "nation":        1.0,
-    "business":      0.9,
-    "technology":    0.3,
-    "science":       0.3,
-    "health":        0.3,
-    "entertainment": 0.2,
-    "sports":        0.2,
-}
 
 
 def run_clustering(
@@ -171,7 +159,7 @@ def _merge_into_issue(
     all_articles = list(issue.articles) + new_articles
     all_sources = {a.source for a in all_articles}
     all_countries = {a.country for a in all_articles}
-    weight = _CATEGORY_WEIGHT.get(category, 0.5)
+    weight = CATEGORY_WEIGHT.get(category, 0.5)
     issue.importance_score = round(
         len(all_articles)
         * len(all_sources)
@@ -214,7 +202,7 @@ def _build_issue(
     countries = {a.country for a in articles}
     country = next(iter(countries)) if len(countries) == 1 else "GLOBAL"
 
-    weight = _CATEGORY_WEIGHT.get(category, 0.5)
+    weight = CATEGORY_WEIGHT.get(category, 0.5)
     importance_score = round(
         len(articles)
         * len({a.source for a in articles})

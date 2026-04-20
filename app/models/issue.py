@@ -6,7 +6,7 @@ if TYPE_CHECKING:
 
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, Float, Integer, String, Text
+from sqlalchemy import DateTime, Float, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.constants import ISSUE_OPEN
@@ -34,7 +34,6 @@ class Issue(Base):
     )
 
     status: Mapped[str] = mapped_column(String(30), nullable=False, default=ISSUE_OPEN)
-    alert_sent: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     centroid_json: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     articles: Mapped[list["Article"]] = relationship(

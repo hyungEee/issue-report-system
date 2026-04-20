@@ -36,3 +36,14 @@ COUNTRY_LANG_MAP = {
     "tw": "zh",
     "ru": "ru",
 }
+
+CATEGORY_WEIGHT: dict[str, float] = {
+    "general":       1.0,
+    "world":         1.0,
+    "nation":        1.0,
+    "business":      0.9,
+    "technology":    0.3,
+    "science":       0.3,
+    "entertainment": 0.2,
+    "sports":        0.2,
+}

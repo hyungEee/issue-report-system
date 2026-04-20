@@ -71,7 +71,7 @@ def get_user_setting(email: str, db: DbDep):
     return _to_response(user_setting)
 
 
-@router.put("", response_model=UserSettingResponse, status_code=201)
+@router.put("", response_model=UserSettingResponse, status_code=200)
 def upsert_user_setting(body: UserSettingRequest, db: DbDep):
     repo = UserSettingRepository(db)
     user_setting = repo.upsert(

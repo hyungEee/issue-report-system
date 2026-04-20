@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import date
+from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -58,7 +58,7 @@ def run_create_reports(db: Session) -> dict[str, int]:
 
 
 def _build_report_content(issues: list[Issue], llm_service: LLMService) -> str:
-    report_date = date.today()
+    report_date = datetime.now(timezone.utc).date()
     blocks: list[str] = [
         f"<h2>{report_date.strftime('%Y년 %m월 %d일')} 주요 이슈 리포트</h2>",
         f"<p>총 {len(issues)}개 이슈</p>",
