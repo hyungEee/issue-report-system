@@ -28,28 +28,6 @@
 
 ## 🏗️ 아키텍처
 
-```mermaid
-flowchart TD
-
-subgraph Collect_Cluster [30min Job]
-    A[GNews API] --> B[(Articles DB)]
-    B --> C[Embedding]
-    C --> D[DBSCAN]
-    D --> E{Similar Issue?}
-    E -->|Yes| F[Merge Issue]
-    E -->|No| G[New Issue]
-    F --> H[(Issues DB)]
-    G --> H
-end
-
-subgraph Report [Daily Job]
-    H --> I[Select Issues]
-    I --> J[LLM Summary]
-    J --> K[(Reports DB)]
-    K --> L[Send Email]
-end
-```mermaid
-
 
 ## 🗄 데이터베이스 설계
 <img width="770" height="581" alt="image" src="https://github.com/user-attachments/assets/0c238dc9-168f-433e-a670-33b3feda4506" />
