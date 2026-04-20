@@ -27,8 +27,6 @@
 
 
 ## 🏗️ 아키텍처
-이렇게 바꿔야 함 👇
-
 flowchart TD
 
 subgraph Collect_Cluster [30min Job]
