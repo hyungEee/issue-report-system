@@ -171,7 +171,7 @@ def _merge_into_issue(
 
     issue.centroid_json = json.dumps(updated_centroid.tolist())
     issue.article_count = total_count
-    issue.last_seen_at = max(a.published_at for a in new_articles)
+    issue.last_seen_at = datetime.now(timezone.utc)
 
     # importance_score 재계산
     all_articles = list(issue.articles) + new_articles
@@ -237,7 +237,7 @@ def _build_issue(
         category=category,
         importance_score=importance_score,
         article_count=len(articles),
-        last_seen_at=max(published_times),
+        last_seen_at=datetime.now(timezone.utc),
         centroid_json=json.dumps(centroid.tolist()),
         status=ISSUE_OPEN,
     )
