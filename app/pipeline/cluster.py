@@ -40,7 +40,7 @@ def _is_country_compatible(cluster_country: str, issue_country: str) -> bool:
 def run_clustering(
     db: Session,
     since_hours: int = 48,
-    eps: float = 0.25,
+    eps: float = 0.30,
     min_samples: int = 2,
 ) -> dict[str, int]:
     """
