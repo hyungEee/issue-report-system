@@ -27,11 +27,12 @@
 
 
 ## 🏗️ 아키텍처
-이미지 넣기 +설명
+이미지 넣기
 
 
 ## 🗄 데이터베이스 설계
 <img width="770" height="581" alt="image" src="https://github.com/user-attachments/assets/0c238dc9-168f-433e-a670-33b3feda4506" />
+
 - articles: 수집된 개별 뉴스 기사 저장
 - issues: 유사 기사들을 묶은 이슈 단위
 - reports: 사용자 맞춤 리포트 결과물
