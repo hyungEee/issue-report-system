@@ -1,6 +1,6 @@
 # 🌏 이슈 리포트 시스템
-세계 각국의 뉴스 데이터를 실시간으로 수집/분석한 뒤, 이메일을 통해 사용자 맞춤형 이슈 리포트를 자동으로 보고하는 서비스입니다. </br>
-<img width="2278" height="1224" alt="이미지" src="https://github.com/user-attachments/assets/62641f59-4b59-4db1-a058-6bc509652394" />
+세계 각국의 뉴스 데이터를 실시간으로 수집/분석한 뒤, 이메일을 통해 사용자 맞춤형 이슈 리포트를 자동으로 보고하는 서비스입니다.
+<img width="1519" height="816" alt="이미지" src="https://github.com/user-attachments/assets/62641f59-4b59-4db1-a058-6bc509652394" />
 
 
 ## 설계 의도
