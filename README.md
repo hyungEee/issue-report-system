@@ -66,6 +66,3 @@
 - Anthropic Claude API
 - GNews API
 
-## 개선 예정
-- 한국 뉴스 데이터 보강(RSS 활용) 및 카테고리 세분화
-- 사용자 구독 수정 및 해지 기능
