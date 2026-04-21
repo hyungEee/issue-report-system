@@ -32,27 +32,7 @@
 
 
 ## 아키텍처
-```mermaid                                                                                                                              
-flowchart TD                                                                                                                            
-    APScheduler["APScheduler"]                                                                                                            
-    APScheduler -->|"매 30분"| Collect                                                                                                    
-    APScheduler -->|"매일 21:00 UTC"| CreateReport                         
-                                                               
-    GNews["GNews API\n8개국 × 7카테고리"]                                                                                                 
-    GNews --> Collect["수집 collect.py"]                                                                                                  
-    Collect -->|"해시 중복 제거"| ArticlesDB[("MySQL\narticles")]                                                                  
-    ArticlesDB --> Embed["임베딩 BAAI/bge-m3"]                                                                                     
-    Embed --> Cluster["클러스터링 DBSCAN"]                                                                                         
-    Cluster --> IssuesDB[("MySQL\nissues")]                                                                                        
-                                                                                                                                   
-    IssuesDB --> CreateReport["리포트 생성 Claude API"]                                                                            
-    CreateReport --> ReportsDB[("MySQL\nreports")]                                                                                 
-    ReportsDB --> Send["이메일 발송"]                                                                                              
-                                                                                                                                   
-    Vue["Vue 3"] <-->|"구독 관리"| FastAPI["FastAPI"]                                                                              
-    FastAPI <--> UserDB[("MySQL\nuser_settings")]                                                                                  
-    UserDB -->|"수신자 목록"| Send                                                                                                 
-``` 
+추가 예정
 
 ## 데이터베이스 설계
 <img width="770" height="581" alt="image" src="https://github.com/user-attachments/assets/0c238dc9-168f-433e-a670-33b3feda4506" />
