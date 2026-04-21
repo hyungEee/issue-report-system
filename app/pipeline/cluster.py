@@ -189,9 +189,9 @@ def _merge_into_issue(
     old_sim = float(old_centroid @ updated_centroid)
     best_new = _best_representative(new_articles, new_embeddings, updated_centroid)
     best_new_sim = float(new_sims[new_articles.index(best_new)])
-    if _get_summary(best_new) and best_new_sim > old_sim:
+    if best_new.description and best_new_sim > old_sim:
         issue.representative_title = best_new.title
-        issue.representative_summary = _get_summary(best_new)
+        issue.representative_summary = best_new.description
         issue.representative_url = best_new.url
 
 
@@ -204,10 +204,6 @@ def _best_representative(articles: list[Article], embeddings: np.ndarray, centro
     else:
         best_i = int(np.argmax(sims))
     return articles[best_i]
-
-
-def _get_summary(article: Article) -> str | None:
-    return article.description or None
 
 
 def _build_issue(
@@ -230,7 +226,7 @@ def _build_issue(
 
     return Issue(
         representative_title=center_article.title,
-        representative_summary=_get_summary(center_article),
+        representative_summary=center_article.description,
         representative_url=center_article.url,
         country=country,
         category=category,

@@ -45,9 +45,6 @@ class NewsService:
         lang: str | None = None,
         max_results: int = 100,
         page: int = 1,
-        from_date: str | None = None,
-        to_date: str | None = None,
-        q: str | None = None,
     ) -> list[RawNewsArticle]:
         """
         GNews top-headlines 조회.
@@ -70,37 +67,31 @@ class NewsService:
 
         if resolved_lang:
             params["lang"] = resolved_lang
-        if from_date:
-            params["from"] = from_date
-        if to_date:
-            params["to"] = to_date
-        if q:
-            params["q"] = q
 
-        for attempt in range(API_MAX_RETRIES):
-            try:
-                with httpx.Client(timeout=HTTP_TIMEOUT) as client:
+        with httpx.Client(timeout=HTTP_TIMEOUT) as client:
+            for attempt in range(API_MAX_RETRIES):
+                try:
                     response = client.get(f"{self.BASE_URL}/top-headlines", params=params)
                     response.raise_for_status()
                     data = response.json()
-                break
-            except httpx.HTTPStatusError as e:
-                if e.response.status_code == 429 and attempt < API_MAX_RETRIES - 1:
-                    wait = API_RETRY_BASE_WAIT * (2 ** attempt)
-                    logger.warning("GNews rate limit - %d초 후 재시도 (attempt=%d)", wait, attempt + 1)
-                    time.sleep(wait)
-                    continue
-                logger.exception(
-                    "GNews HTTP 오류 - status=%s body=%s",
-                    e.response.status_code if e.response else "unknown",
-                    e.response.text if e.response else "no-response",
-                )
-                raise NewsServiceError(f"GNews HTTP 오류: {e}") from e
-            except httpx.HTTPError as e:
-                logger.exception("GNews 호출 실패")
-                raise NewsServiceError(f"GNews 호출 실패: {e}") from e
-        else:
-            raise NewsServiceError("GNews rate limit 초과 - 재시도 횟수 소진")
+                    break
+                except httpx.HTTPStatusError as e:
+                    if e.response.status_code == 429 and attempt < API_MAX_RETRIES - 1:
+                        wait = API_RETRY_BASE_WAIT * (2 ** attempt)
+                        logger.warning("GNews rate limit - %d초 후 재시도 (attempt=%d)", wait, attempt + 1)
+                        time.sleep(wait)
+                        continue
+                    logger.exception(
+                        "GNews HTTP 오류 - status=%s body=%s",
+                        e.response.status_code if e.response else "unknown",
+                        e.response.text if e.response else "no-response",
+                    )
+                    raise NewsServiceError(f"GNews HTTP 오류: {e}") from e
+                except httpx.HTTPError as e:
+                    logger.exception("GNews 호출 실패")
+                    raise NewsServiceError(f"GNews 호출 실패: {e}") from e
+            else:
+                raise NewsServiceError("GNews rate limit 초과 - 재시도 횟수 소진")
 
         articles = data.get("articles", [])
         if not isinstance(articles, list):
