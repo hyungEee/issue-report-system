@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     gnews_api_key: str | None = None
     anthropic_api_key: str | None = None
     llm_model: str = "claude-haiku-4-5-20251001"
-    embedding_model: str = "paraphrase-multilingual-MiniLM-L12-v2"
+    embedding_model: str = "BAAI/bge-m3"
 
     # 이메일 (SMTP)
     smtp_host: str = "smtp.gmail.com"
