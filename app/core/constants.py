@@ -20,8 +20,17 @@ REPORT_FAILED = "FAILED"
 # 뉴스 수집 + 클러스터링 실행 주기 (분)
 SCHEDULER_INTERVAL_MINUTES = 30
 
-# 일간 리포트 생성/발송 시각 (UTC 기준 시)
-REPORT_HOUR = 1
+# 리포트 생성 잡 실행 시각
+REPORT_HOUR = 0
+
+# 리포트 생성 잡 실행 분 (REPORT_HOUR:REPORT_CREATE_MINUTE)
+REPORT_CREATE_MINUTE = 30
+
+# 리포트 발송 잡 실행 분 (REPORT_HOUR:REPORT_SEND_MINUTE)
+REPORT_SEND_MINUTE = 40
+
+# 잡이 예정 시각을 초과했을 때 허용하는 최대 지연 시간 (초)
+SCHEDULER_MISFIRE_GRACE_TIME = 3600
 
 # =============================================================================
 # 리포트 구성
@@ -79,19 +88,6 @@ CLUSTERING_ARTICLE_LIMIT = 1000
 
 # BAAI/bge-m3 모델의 출력 벡터 차원 수
 EMBEDDING_DIM = 1024
-
-# =============================================================================
-# 스케줄러 세부 설정
-# =============================================================================
-
-# 리포트 생성 잡 실행 분 (REPORT_HOUR:REPORT_CREATE_MINUTE)
-REPORT_CREATE_MINUTE = 30
-
-# 리포트 발송 잡 실행 분 (REPORT_HOUR:REPORT_SEND_MINUTE)
-REPORT_SEND_MINUTE = 40
-
-# 잡이 예정 시각을 초과했을 때 허용하는 최대 지연 시간 (초)
-SCHEDULER_MISFIRE_GRACE_TIME = 3600
 
 # =============================================================================
 # 외부 API
