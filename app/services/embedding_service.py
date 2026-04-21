@@ -17,7 +17,7 @@ class EmbeddingService:
     def _get_model(self) -> SentenceTransformer:
         if EmbeddingService._model is None:
             logger.info("임베딩 모델 로딩 - model=%s", settings.embedding_model)
-            EmbeddingService._model = SentenceTransformer(settings.embedding_model)
+            EmbeddingService._model = SentenceTransformer(settings.embedding_model, trust_remote_code=True)
         return EmbeddingService._model
 
     def embed_articles(self, articles: list[Article]) -> np.ndarray:
