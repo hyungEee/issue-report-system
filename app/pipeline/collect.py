@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import hashlib
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.orm import Session
 
-from app.core.constants import DESCRIPTION_FALLBACK_LENGTH, MIN_DESCRIPTION_LENGTH
+from app.core.constants import COLLECT_MAX_AGE_HOURS, DESCRIPTION_FALLBACK_LENGTH, MIN_DESCRIPTION_LENGTH
 from app.core.logger import get_logger
 from app.core.news_targets import CATEGORY_MAX_PAGES, COUNTRY_MAX_PAGES, SUPPORTED_CATEGORIES, SUPPORTED_COUNTRIES
 from app.models.article import Article
@@ -20,7 +20,6 @@ def collect_news(
     countries: list[str] | None = None,
     categories: list[str] | None = None,
     max_results_per_call: int = 100,
-    max_pages: int = 1,
 ) -> dict[str, int]:
     """
     GNews로부터 여러 국가/카테고리 헤드라인을 수집하고
@@ -46,13 +45,14 @@ def collect_news(
         "fetched": 0,
         "saved": 0,
         "skipped_dedup_duplicate": 0,
+        "skipped_too_old": 0,
         "failed_calls": 0,
     }
 
     for country in target_countries:
-        country_pages = COUNTRY_MAX_PAGES.get(country, max_pages)
+        country_pages = COUNTRY_MAX_PAGES.get(country, 1)
         for category in target_categories:
-            pages = min(country_pages, CATEGORY_MAX_PAGES.get(category, max_pages))
+            pages = min(country_pages, CATEGORY_MAX_PAGES.get(category, 1))
             for page in range(1, pages + 1):
                 stats["requested"] += 1
 
@@ -76,9 +76,9 @@ def collect_news(
 
                 stats["fetched"] += len(raw_articles)
 
-                _save_batch(raw_articles, article_repo, stats)
+                too_old = _save_batch(raw_articles, article_repo, stats)
 
-                if len(raw_articles) < max_results_per_call:
+                if too_old or len(raw_articles) < max_results_per_call:
                     break
 
     logger.info("뉴스 수집 완료 - stats=%s", stats)
@@ -89,11 +89,20 @@ def _save_batch(
     raw_articles: list[RawNewsArticle],
     article_repo: ArticleRepository,
     stats: dict[str, int],
-) -> None:
+) -> bool:
+    """배치를 저장하고, 기준 시간보다 오래된 기사를 만나면 True를 반환합니다."""
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=COLLECT_MAX_AGE_HOURS)
     candidate_keys = [_make_dedup_key(raw) for raw in raw_articles]
     seen_keys = article_repo.get_existing_dedup_keys(candidate_keys)
 
     for raw, dedup_key in zip(raw_articles, candidate_keys):
+        published = raw.published_at
+        if published.tzinfo is None:
+            published = published.replace(tzinfo=timezone.utc)
+        if published < cutoff:
+            stats["skipped_too_old"] += 1
+            return True
+
         if dedup_key in seen_keys:
             stats["skipped_dedup_duplicate"] += 1
             continue
@@ -101,6 +110,8 @@ def _save_batch(
         article_repo.save(_to_article_model(raw, dedup_key))
         stats["saved"] += 1
         seen_keys.add(dedup_key)
+
+    return False
 
 
 def _to_article_model(raw: RawNewsArticle, dedup_key: str) -> Article:
