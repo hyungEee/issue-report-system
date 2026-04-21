@@ -21,13 +21,13 @@ REPORT_FAILED = "FAILED"
 SCHEDULER_INTERVAL_MINUTES = 30
 
 # 리포트 생성 잡 실행 시각
-REPORT_HOUR = 0
+REPORT_HOUR = 12
 
 # 리포트 생성 잡 실행 분 (REPORT_HOUR:REPORT_CREATE_MINUTE)
-REPORT_CREATE_MINUTE = 30
+REPORT_CREATE_MINUTE = 00
 
 # 리포트 발송 잡 실행 분 (REPORT_HOUR:REPORT_SEND_MINUTE)
-REPORT_SEND_MINUTE = 40
+REPORT_SEND_MINUTE = 20
 
 # 잡이 예정 시각을 초과했을 때 허용하는 최대 지연 시간 (초)
 SCHEDULER_MISFIRE_GRACE_TIME = 3600
@@ -50,7 +50,7 @@ MIN_DESCRIPTION_LENGTH = 50
 DESCRIPTION_FALLBACK_LENGTH = 300
 
 # 수집 시 허용하는 기사 최대 연령 (시간) — 이보다 오래된 기사는 저장하지 않음
-COLLECT_MAX_AGE_HOURS = 48
+COLLECT_MAX_AGE_HOURS = 24
 
 # =============================================================================
 # 클러스터링 (DBSCAN)
@@ -64,7 +64,7 @@ DBSCAN_EPS = 0.50
 DBSCAN_MIN_SAMPLES = 2
 
 # 클러스터링 대상 기사의 수집 시간 범위 (시간)
-CLUSTERING_SINCE_HOURS = 48
+CLUSTERING_SINCE_HOURS = 24
 
 # =============================================================================
 # 이슈 병합
