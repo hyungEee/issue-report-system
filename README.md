@@ -15,7 +15,7 @@
 ### 1. 글로벌 뉴스 수집 (GNews API)
 - GNews API 기반 8개국 × 7카테고리 헤드라인 수집
 - 국가별 중요도에 따라 페이지 수 차등 수집
-- title + source + published_at(hour) 기반 SHA-256 dedup 중복제거
+- SHA-256 해시함수 기반 dedup key를 만들어중복제거
 - 429 발생 시 지수 백오프 재시도 로직 (5s → 10s → 20s)
 - 24시간 초과 기사 필터링 + 조기 종료 로직
 
