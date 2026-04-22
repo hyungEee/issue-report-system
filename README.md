@@ -31,7 +31,7 @@
 - 사용자는 프론트엔드에서 카테고리를 선택해 리포트를 구독할 수 있으며, 생성된 리포트는 구독 신청한 이메일로 자동 발송됩니다.
 
 
-## 아키텍처
+## 시스템 흐름
 <img width="1951" height="1021" alt="제목 없는 다이어그램-페이지-1" src="https://github.com/user-attachments/assets/59b007ca-607f-4ace-8a19-4feadc5edb3e" />
 
 
