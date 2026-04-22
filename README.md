@@ -32,7 +32,8 @@
 
 
 ## 아키텍처
-추가 예정
+<img width="1951" height="1021" alt="제목 없는 다이어그램-페이지-1" src="https://github.com/user-attachments/assets/59b007ca-607f-4ace-8a19-4feadc5edb3e" />
+
 
 ## 데이터베이스 설계
 <img width="770" height="581" alt="image" src="https://github.com/user-attachments/assets/0c238dc9-168f-433e-a670-33b3feda4506" />
