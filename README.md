@@ -46,25 +46,12 @@
 
 
 ## 기술 스택
-### Backend
-- Python, FastAPI
-- SQLAlchemy, Pydantic
-
-### Data
-- Sentence Transformers
-- scikit-learn, NumPy
-
-### Database
-- MySQL
-
-### Frontend
-- Vue 3, Vite
-
-### Tools
-- APScheduler
-- HTTPX
-
-### APIs
-- Anthropic Claude API
-- GNews API
+| 영역        | 기술 |
+|------------|------|
+| **Backend** | Python, FastAPI, SQLAlchemy, Pydantic |
+| **Data**    | Sentence Transformers, scikit-learn, NumPy |
+| **Database**| MySQL |
+| **Frontend**| Vue 3, Vite |
+| **Tools**   | APScheduler, HTTPX |
+| **APIs**    | Anthropic Claude API, GNews API |
 
