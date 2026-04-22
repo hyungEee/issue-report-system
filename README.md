@@ -33,7 +33,8 @@
 - 리포트는 DB에 PENDING 상태 저장된 뒤, 일정시각에 발송됨
 
 ## 시스템 흐름
-<img width="1951" height="1021" alt="제목 없는 다이어그램-페이지-1 (1)" src="https://github.com/user-attachments/assets/ab9fea0a-6644-4298-ad05-db33abe91005" />
+<img width="1951" height="1021" alt="제목 없는 다이어그램-페이지-1 (2)" src="https://github.com/user-attachments/assets/ae783a27-f342-42ba-a5d3-d1ab510767b1" />
+
 
 ## 데이터베이스 설계
 <img width="770" height="581" alt="image" src="https://github.com/user-attachments/assets/0c238dc9-168f-433e-a670-33b3feda4506" />
